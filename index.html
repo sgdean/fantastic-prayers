@@ -63,6 +63,7 @@ body{
   user-select:none;
   -webkit-user-drag:none;
   transition:filter 70ms linear, transform 70ms linear;
+  image-rendering:auto;
 }
 
 #frame.blurring{
@@ -130,7 +131,7 @@ body{
   </div>
 </div>
 
-<div id="hint">1 finger = move room · 2 fingers = zoom/pan</div>
+<div id="hint">1 finger / mouse drag = move room · 2 fingers = zoom / pan · double tap = reset zoom</div>
 
 <script>
 const STAGE_W = 640
@@ -147,7 +148,6 @@ const videoFull = document.getElementById("videoFull")
 const videoWindow = document.getElementById("videoWindow")
 const stage = document.getElementById("stage")
 const stageWrap = document.getElementById("stageWrap")
-const viewport = document.getElementById("viewport")
 
 const sequence = [
   "media/Night.mp4",
@@ -292,7 +292,6 @@ hotspot.onclick = playSequence
 let pointers = new Map()
 
 let dragging = false
-let dragStartX = 0
 let dragLastStepX = 0
 const dragThreshold = 80
 
@@ -330,15 +329,14 @@ stage.addEventListener("pointerdown", e => {
 
   if (pointers.size === 1){
     dragging = true
-    dragStartX = e.clientX
     dragLastStepX = e.clientX
     stage.classList.add("dragging")
     frame.classList.add("blurring")
   }
 
   if (pointers.size === 2){
-    stopDrag()
     pinching = true
+    stopDrag()
 
     const pts = Array.from(pointers.values())
     pinchStartDistance = getDistance(pts[0], pts[1])
@@ -361,7 +359,6 @@ stage.addEventListener("pointermove", e => {
     const center = getCenter(pts[0], pts[1])
 
     userScale = clamp((dist / pinchStartDistance) * pinchStartScale, 1, 4)
-
     panX = pinchStartPanX + (center.x - pinchStartCenter.x)
     panY = pinchStartPanY + (center.y - pinchStartCenter.y)
 
@@ -370,15 +367,6 @@ stage.addEventListener("pointermove", e => {
   }
 
   if (pointers.size === 1 && dragging){
-    const dxTotal = e.clientX - dragStartX
-
-    if (userScale > 1.02){
-      panX += (e.clientX - dragLastStepX)
-      dragLastStepX = e.clientX
-      applyTransform()
-      return
-    }
-
     const dx = e.clientX - dragLastStepX
 
     if(dx > dragThreshold){
@@ -400,17 +388,16 @@ function endPointer(e){
     pinching = false
   }
 
-  if (pointers.size === 0){
-    stopDrag()
-  } else if (pointers.size === 1){
+  if (pointers.size === 1 && !playing){
     const remaining = Array.from(pointers.values())[0]
     dragging = true
-    dragStartX = remaining.clientX
     dragLastStepX = remaining.clientX
-    if (!playing) {
-      stage.classList.add("dragging")
-      frame.classList.add("blurring")
-    }
+    stage.classList.add("dragging")
+    frame.classList.add("blurring")
+  }
+
+  if (pointers.size === 0){
+    stopDrag()
   }
 }
 
@@ -418,10 +405,10 @@ stage.addEventListener("pointerup", endPointer)
 stage.addEventListener("pointercancel", endPointer)
 stage.addEventListener("pointerleave", endPointer)
 
-/* ---------- DOUBLE TAP TO RESET ZOOM ---------- */
+/* ---------- DOUBLE TAP / DOUBLE CLICK RESET ---------- */
 
 let lastTap = 0
-stage.addEventListener("click", e => {
+stage.addEventListener("click", () => {
   const now = Date.now()
   if (now - lastTap < 280 && userScale > 1.02){
     resetZoom()
