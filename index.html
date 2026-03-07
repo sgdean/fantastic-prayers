@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Fantastic Prayers — Walls</title>
+
+<style>
+body{
+  margin:0;
+  background:#111;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:100vh;
+}
+
+#stage{
+  position:relative;
+  width:640px;
+  height:480px;
+  cursor:grab;
+  overflow:hidden;
+  user-select:none;
+}
+
+#stage.dragging{
+  cursor:grabbing;
+}
+
+#frame{
+  position:absolute;
+  width:640px;
+  height:480px;
+  user-select:none;
+  -webkit-user-drag:none;
+  transition:filter 70ms linear, transform 70ms linear;
+}
+
+#frame.blurring{
+  filter:blur(3px);
+  transform:scale(1.01);
+}
+
+#videoFull{
+  position:absolute;
+  left:0;
+  top:0;
+  width:640px;
+  height:480px;
+  display:none;
+  z-index:2;
+}
+
+#videoWindow{
+  position:absolute;
+  left:0px;
+  top:78px;
+  width:640px;
+  height:220px;
+  display:none;
+  z-index:3;
+}
+
+#hotspot{
+  position:absolute;
+  left:210px;
+  top:85px;
+  width:430px;
+  height:200px;
+  display:none;
+  cursor:pointer;
+  z-index:4;
+}
+</style>
+</head>
+
+<body>
+
+<div id="stage">
+  <img id="frame" src="frames/frame10.png">
+  <div id="hotspot"></div>
+  <video id="videoFull" playsinline preload="auto"></video>
+  <video id="videoWindow" playsinline preload="auto"></video>
+</div>
+
+<script>
+const totalFrames = 23
+let currentFrame = Math.floor(Math.random() * totalFrames) + 1
+let playing = false
+let seqIndex = 0
+
+const frame = document.getElementById("frame")
+const hotspot = document.getElementById("hotspot")
+const videoFull = document.getElementById("videoFull")
+const videoWindow = document.getElementById("videoWindow")
+const stage = document.getElementById("stage")
+
+const sequence = [
+  "media/Night.mp4",
+  "media/Suckling.mp4",
+  "media/NightRev.mp4"
+]
+
+const preload = sequence.map(src => {
+  const v = document.createElement("video")
+  v.src = src
+  v.preload = "auto"
+  return v
+})
+
+function updateFrame(){
+  frame.src = "frames/frame" + currentFrame + ".png"
+  hotspot.style.display = (currentFrame === 10 && !playing) ? "block" : "none"
+}
+
+function nextFrame(){
+  if(playing) return
+  currentFrame++
+  if(currentFrame > totalFrames) currentFrame = 1
+  updateFrame()
+}
+
+function prevFrame(){
+  if(playing) return
+  currentFrame--
+  if(currentFrame < 1) currentFrame = totalFrames
+  updateFrame()
+}
+
+function resetSequence(){
+  playing = false
+  seqIndex = 0
+
+  videoFull.pause()
+  videoWindow.pause()
+
+  videoFull.style.display = "none"
+  videoWindow.style.display = "none"
+
+  frame.style.display = "block"
+  updateFrame()
+}
+
+function playSequence(){
+  if(playing) return
+  if(currentFrame !== 10) return
+
+  playing = true
+  hotspot.style.display = "none"
+
+  videoFull.src = sequence[0]
+  videoFull.currentTime = 0
+  videoFull.style.display = "block"
+
+  const startNight = () => {
+    frame.style.display = "none"
+    videoFull.play()
+    videoFull.removeEventListener("canplay", startNight)
+  }
+
+  videoFull.addEventListener("canplay", startNight)
+  videoFull.load()
+}
+
+videoFull.onended = () => {
+  if(seqIndex === 0){
+    // KEEP Night visible on its last frame
+    videoWindow.src = sequence[1]
+    videoWindow.currentTime = 0
+    videoWindow.style.display = "block"
+    videoWindow.play()
+    seqIndex = 1
+  } else if(seqIndex === 2){
+    resetSequence()
+  }
+}
+
+videoWindow.onended = () => {
+  // preload NightRev on the full layer before hiding Suckling
+  videoFull.src = sequence[2]
+  videoFull.currentTime = 0
+  videoFull.style.display = "block"
+
+  const startNightRev = () => {
+    videoWindow.style.display = "none"
+    videoFull.play()
+    seqIndex = 2
+    videoFull.removeEventListener("canplay", startNightRev)
+  }
+
+  videoFull.addEventListener("canplay", startNightRev)
+  videoFull.load()
+}
+
+hotspot.onclick = playSequence
+
+let dragging = false
+let lastFrameX = 0
+const dragThreshold = 80
+
+stage.addEventListener("pointerdown", e => {
+  if(playing) return
+  dragging = true
+  lastFrameX = e.clientX
+  stage.classList.add("dragging")
+  frame.classList.add("blurring")
+})
+
+stage.addEventListener("pointermove", e => {
+  if(!dragging) return
+  if(playing) return
+
+  const dx = e.clientX - lastFrameX
+
+  if(dx > dragThreshold){
+    prevFrame()
+    lastFrameX = e.clientX
+  }
+
+  if(dx < -dragThreshold){
+    nextFrame()
+    lastFrameX = e.clientX
+  }
+})
+
+function stopDrag(){
+  dragging = false
+  stage.classList.remove("dragging")
+  frame.classList.remove("blurring")
+}
+
+stage.addEventListener("pointerup", stopDrag)
+stage.addEventListener("pointerleave", stopDrag)
+stage.addEventListener("pointercancel", stopDrag)
+
+updateFrame()
+</script>
+
+</body>
+</html>
