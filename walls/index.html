@@ -310,6 +310,153 @@ function fadeAudioOut(audio, ms = 300) {
   }, stepMs)
 }
 
+/* ---------- AMBIENT SOUND ENGINE ---------- */
+
+const MAX_AMBIENT_CHANNELS = 5
+const ambientChannels = []
+
+const ambientSounds = {
+  drum: {
+    file: "audio/drum.wav",
+    loop: true,
+    map: {
+      17: { x: 481, y: 340, w: 56, h: 64 },
+      18: { x: 387, y: 315, w: 44, h: 56 },
+      19: { x: 325, y: 315, w: 40, h: 52 },
+      20: { x: 220, y: 300, w: 40, h: 48 },
+      21: { x: 180, y: 305, w: 40, h: 52 },
+      22: { x: 145, y: 300, w: 40, h: 52 },
+      23: { x: 0,   y: 325, w: 20, h: 52 }
+    }
+  },
+  noNotThat: {
+    file: "audio/no-not-that.wav",
+    loop: false,
+    map: {
+      12: { x: 510, y: 90, w: 48, h: 80 },
+      13: { x: 365, y: 90, w: 52, h: 88 },
+      14: { x: 245, y: 90, w: 56, h: 88 },
+      15: { x: 120, y: 95, w: 60, h: 100 },
+      16: { x: 20,  y: 95, w: 68, h: 96 }
+    }
+  }
+}
+
+let mouseInsideStage = false
+let lastMouseStageX = null
+let lastMouseStageY = null
+let activeTouchLoopNames = new Set()
+
+function ambientVolumeForCount(count){
+  if (count <= 1) return 1
+  if (count === 2) return 0.5
+  if (count === 3) return 0.33
+  if (count === 4) return 0.25
+  return 0.2
+}
+
+function updateAmbientVolumes(){
+  const active = ambientChannels.filter(ch => !ch.fading)
+  const volume = ambientVolumeForCount(active.length)
+  active.forEach(ch => {
+    ch.audio.volume = volume
+  })
+}
+
+function removeAmbientChannel(channel){
+  const i = ambientChannels.indexOf(channel)
+  if(i > -1) ambientChannels.splice(i, 1)
+  updateAmbientVolumes()
+}
+
+function fadeOutAndRemove(channel, ms = 700){
+  if (!channel || channel.fading) return
+
+  channel.fading = true
+
+  const audio = channel.audio
+  const startVol = audio.volume
+  const steps = 20
+  const stepMs = ms / steps
+  let i = 0
+
+  const id = setInterval(() => {
+    i++
+    const nextVol = Math.max(0, startVol * (1 - i / steps))
+    audio.volume = nextVol
+
+    if (i >= steps) {
+      clearInterval(id)
+      audio.pause()
+      audio.currentTime = 0
+      removeAmbientChannel(channel)
+    }
+  }, stepMs)
+}
+
+function stopAllAmbientSounds(){
+  ambientChannels.slice().forEach(ch => fadeOutAndRemove(ch, 200))
+}
+
+function startAmbientSound(name, source = "pointer"){
+  const sound = ambientSounds[name]
+  if (!sound) return
+
+  const already = ambientChannels.find(ch => ch.name === name)
+  if (already) return
+
+  if (ambientChannels.length >= MAX_AMBIENT_CHANNELS) {
+    const victim = ambientChannels[Math.floor(Math.random() * ambientChannels.length)]
+    fadeOutAndRemove(victim, 140)
+  }
+
+  const audio = new Audio(sound.file)
+  const channel = {
+    name,
+    audio,
+    loop: sound.loop,
+    source,
+    fading: false
+  }
+
+  audio.loop = sound.loop
+  ambientChannels.push(channel)
+  updateAmbientVolumes()
+
+  audio.play().catch(() => {})
+
+  if (!sound.loop) {
+    audio.onended = () => {
+      removeAmbientChannel(channel)
+    }
+  }
+}
+
+function getAmbientMatches(x, y){
+  const matches = []
+
+  for (const name in ambientSounds){
+    const rect = ambientSounds[name].map[currentFrame]
+    if (!rect) continue
+
+    if (
+      x >= rect.x &&
+      x <= rect.x + rect.w &&
+      y >= rect.y &&
+      y <= rect.y + rect.h
+    ){
+      matches.push(name)
+    }
+  }
+
+  return matches
+}
+
+function checkAmbientHotspots(x, y, source = "pointer"){
+  const matches = getAmbientMatches(x, y)
+  matches.forEach(name => startAmbientSound(name, source))
+}
+
 /* ---------- HOTSPOT MAPPER ---------- */
 
 function drawMapperBox(){
@@ -357,6 +504,11 @@ function updateFrame(){
   }
 
   drawMapperBox()
+
+  if (mouseInsideStage && lastMouseStageX !== null && lastMouseStageY !== null) {
+    checkAmbientHotspots(lastMouseStageX, lastMouseStageY, "pointer")
+  }
+
 }
 
 function nextFrame(){
@@ -380,6 +532,8 @@ function resetSequence(){
   seqIndex = 0
   heartScrubActive = false
   buzzingActive = false
+
+  stopAllAmbientSounds()
 
   videoFull.pause()
   videoWindow.pause()
@@ -414,6 +568,8 @@ function resetSequence(){
 function playSucklingSequence(){
   if(playing) return
   if(currentFrame !== 10) return
+
+    stopAllAmbientSounds()
 
   playing = true
   seqIndex = 0
@@ -468,6 +624,8 @@ function playHeart(startAudio = true){
 
   playing = true
   hotspot.style.display = "none"
+
+  stopAllAmbientSounds()
 
   videoHeart.src = "media/heart.mp4"
   videoHeart.currentTime = 0
@@ -572,6 +730,8 @@ function moveToFrame15ThenPlayHeart(){
 
 function playBuzzing(){
   if (playing) return
+
+      stopAllAmbientSounds()
 
   playing = true
   buzzingActive = true
@@ -727,6 +887,52 @@ videoBuzzing.addEventListener("dblclick", e => {
   if (!buzzingActive) return
   e.stopPropagation()
   closeBuzzing()
+})
+
+/* ---------- AMBIENT HOVER / TOUCH ---------- */
+
+stage.addEventListener("mousemove", e => {
+  const rect = stage.getBoundingClientRect()
+
+  const stageX = ((e.clientX - rect.left) / rect.width) * STAGE_W
+  const stageY = ((e.clientY - rect.top) / rect.height) * STAGE_H
+
+  lastMouseStageX = stageX
+  lastMouseStageY = stageY
+  mouseInsideStage = true
+
+  if (!playing && !heartScrubActive && !buzzingActive) {
+    checkAmbientHotspots(stageX, stageY, "pointer")
+  }
+})
+
+stage.addEventListener("mouseleave", () => {
+  mouseInsideStage = false
+  lastMouseStageX = null
+  lastMouseStageY = null
+})
+
+stage.addEventListener("touchstart", e => {
+  if (playing || heartScrubActive || buzzingActive) return
+
+  const rect = stage.getBoundingClientRect()
+  const stageX = ((e.touches[0].clientX - rect.left) / rect.width) * STAGE_W
+  const stageY = ((e.touches[0].clientY - rect.top) / rect.height) * STAGE_H
+
+  const matches = getAmbientMatches(stageX, stageY)
+  activeTouchLoopNames = new Set(
+    matches.filter(name => ambientSounds[name].loop)
+  )
+
+  matches.forEach(name => startAmbientSound(name, "touch"))
+})
+
+stage.addEventListener("touchend", () => {
+  activeTouchLoopNames.clear()
+})
+
+stage.addEventListener("touchcancel", () => {
+  activeTouchLoopNames.clear()
 })
 
 /* ---------- POINTER INTERACTION ---------- */
@@ -935,17 +1141,18 @@ document.addEventListener("keydown", e => {
   }
 
   const r = map[currentFrame]
-  const step = e.shiftKey ? 5 : 1
+  const moveStep = e.shiftKey ? 5 : 1
+  const resizeStep = e.shiftKey ? 20 : 4
 
-  if (e.key === "ArrowLeft" && !e.altKey) r.x -= step
-  if (e.key === "ArrowRight" && !e.altKey) r.x += step
-  if (e.key === "ArrowUp" && !e.altKey) r.y -= step
-  if (e.key === "ArrowDown" && !e.altKey) r.y += step
+  if (e.key === "ArrowLeft" && !e.altKey) r.x -= moveStep
+  if (e.key === "ArrowRight" && !e.altKey) r.x += moveStep
+  if (e.key === "ArrowUp" && !e.altKey) r.y -= moveStep
+  if (e.key === "ArrowDown" && !e.altKey) r.y += moveStep
 
-  if (e.altKey && e.key === "ArrowLeft") r.w = Math.max(1, r.w - step)
-  if (e.altKey && e.key === "ArrowRight") r.w += step
-  if (e.altKey && e.key === "ArrowUp") r.h = Math.max(1, r.h - step)
-  if (e.altKey && e.key === "ArrowDown") r.h += step
+  if (e.altKey && e.key === "ArrowLeft") r.w = Math.max(1, r.w - resizeStep)
+  if (e.altKey && e.key === "ArrowRight") r.w += resizeStep
+  if (e.altKey && e.key === "ArrowUp") r.h = Math.max(1, r.h - resizeStep)
+  if (e.altKey && e.key === "ArrowDown") r.h += resizeStep
 
   if (e.key === "c" || e.key === "C") {
     console.log(currentMapName + " =", JSON.stringify(map, null, 2))
