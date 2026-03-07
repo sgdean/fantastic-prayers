@@ -93,6 +93,34 @@ body{
   object-fit:fill;
 }
 
+#videoHeart{
+  position:absolute;
+  left:56px;
+  top:216px;
+  width:336px;
+  height:252px;
+  display:none;
+  z-index:3;
+  object-fit:fill;
+  opacity:0;
+  transition:opacity 220ms ease;
+  cursor:ew-resize;
+}
+
+#videoBuzzing{
+  position:absolute;
+  left:328px;
+  top:112px;
+  width:144px;
+  height:288px;
+  display:none;
+  z-index:3;
+  object-fit:fill;
+  opacity:0;
+  transition:opacity 320ms ease;
+  cursor:default;
+}
+
 #hotspot{
   position:absolute;
   left:210px;
@@ -102,6 +130,20 @@ body{
   display:none;
   cursor:pointer;
   z-index:4;
+}
+
+#mapperBox{
+  position:absolute;
+  left:200px;
+  top:150px;
+  width:120px;
+  height:120px;
+  border:2px dashed #ff4d4d;
+  background:rgba(255,0,0,0.10);
+  z-index:20;
+  display:none;
+  box-sizing:border-box;
+  pointer-events:none;
 }
 
 #hint{
@@ -114,6 +156,7 @@ body{
   padding:6px 8px;
   border-radius:6px;
   pointer-events:none;
+  transition:opacity 1s ease;
 }
 </style>
 </head>
@@ -127,11 +170,14 @@ body{
       <div id="hotspot"></div>
       <video id="videoFull" playsinline preload="auto"></video>
       <video id="videoWindow" playsinline preload="auto"></video>
+      <video id="videoHeart" playsinline preload="auto"></video>
+      <video id="videoBuzzing" playsinline preload="auto"></video>
+      <div id="mapperBox"></div>
     </div>
   </div>
 </div>
 
-<div id="hint">1 finger / mouse drag = move room · 2 fingers = zoom / pan · double tap = reset zoom</div>
+<div id="hint">1 finger / mouse drag = move room · 2 fingers = zoom / pan · double tap = reset zoom · heart: drag to rotate · drag outside heart/buzzing to close · m = show mapper · [ / ] = switch map · arrows = move red box · alt+arrows = resize · c = copy coords</div>
 
 <script>
 const STAGE_W = 640
@@ -142,24 +188,63 @@ let currentFrame = Math.floor(Math.random() * totalFrames) + 1
 let playing = false
 let seqIndex = 0
 
+let heartScrubActive = false
+let heartScrubLastX = 0
+const heartScrubSpeed = 0.0035
+
+let buzzingActive = false
+
 const frame = document.getElementById("frame")
 const hotspot = document.getElementById("hotspot")
 const videoFull = document.getElementById("videoFull")
 const videoWindow = document.getElementById("videoWindow")
+const videoHeart = document.getElementById("videoHeart")
+const videoBuzzing = document.getElementById("videoBuzzing")
 const stage = document.getElementById("stage")
 const stageWrap = document.getElementById("stageWrap")
+const mapperBox = document.getElementById("mapperBox")
+const hint = document.getElementById("hint")
 
-const sequence = [
-  "media/Night.mp4",
-  "media/Suckling.mp4",
-  "media/NightRev.mp4"
+const heartAudio = new Audio("media/11.wav")
+heartAudio.preload = "auto"
+
+const sucklingSequence = [
+  "media/night.mp4",
+  "media/suckling.mp4",
+  "media/nightrev.mp4"
 ]
 
-sequence.forEach(src => {
+sucklingSequence.forEach(src => {
   const v = document.createElement("video")
   v.src = src
   v.preload = "auto"
 })
+
+const maps = {
+  heart: {
+    13: { x: 515, y: 290, w: 50, h: 50 },
+    14: { x: 400, y: 300, w: 49, h: 50 },
+    15: { x: 290, y: 316, w: 53, h: 54 },
+    16: { x: 204, y: 314, w: 50, h: 51 },
+    17: { x: 28,  y: 314, w: 62, h: 64 }
+  },
+  buzzing: {
+    2: { x: 556, y: 115, w: 82, h: 59 },
+    3: { x: 430, y: 135, w: 72, h: 52 },
+    4: { x: 370, y: 145, w: 63, h: 47 },
+    5: { x: 289, y: 140, w: 72, h: 59 },
+    6: { x: 161, y: 135, w: 71, h: 58 },
+    7: { x: 140, y: 130, w: 66, h: 57 },
+    8: { x: 40,  y: 115, w: 72, h: 62 }
+  }
+}
+
+let currentMapName = "buzzing"
+let mapperMode = false
+
+function currentMap(){
+  return maps[currentMapName]
+}
 
 /* ---------- FIT / ZOOM / PAN ---------- */
 
@@ -199,11 +284,84 @@ function resetZoom(){
   applyTransform()
 }
 
+/* ---------- AUDIO HELPERS ---------- */
+
+function fadeAudioIn(audio, target = 1, ms = 300) {
+  audio.volume = 0
+  const steps = 20
+  const stepMs = ms / steps
+  let i = 0
+  const id = setInterval(() => {
+    i++
+    audio.volume = Math.min(target, (target * i) / steps)
+    if (i >= steps) clearInterval(id)
+  }, stepMs)
+}
+
+function fadeAudioOut(audio, ms = 300) {
+  const startVol = audio.volume
+  const steps = 20
+  const stepMs = ms / steps
+  let i = 0
+  const id = setInterval(() => {
+    i++
+    audio.volume = Math.max(0, startVol * (1 - i / steps))
+    if (i >= steps) {
+      clearInterval(id)
+      audio.pause()
+      audio.currentTime = 0
+      audio.volume = 1
+    }
+  }, stepMs)
+}
+
+/* ---------- HOTSPOT MAPPER ---------- */
+
+function drawMapperBox(){
+  const map = currentMap()
+  if (!mapperMode || !map[currentFrame]) {
+    mapperBox.style.display = "none"
+    return
+  }
+
+  const r = map[currentFrame]
+  mapperBox.style.display = "block"
+  mapperBox.style.left = r.x + "px"
+  mapperBox.style.top = r.y + "px"
+  mapperBox.style.width = r.w + "px"
+  mapperBox.style.height = r.h + "px"
+}
+
 /* ---------- FRAMES ---------- */
 
 function updateFrame(){
   frame.src = "frames/frame" + currentFrame + ".png"
-  hotspot.style.display = (currentFrame === 10 && !playing) ? "block" : "none"
+
+  if (!playing && currentFrame === 10) {
+    hotspot.style.display = "block"
+    hotspot.style.left = "210px"
+    hotspot.style.top = "85px"
+    hotspot.style.width = "430px"
+    hotspot.style.height = "200px"
+  } else if (!playing && maps.heart[currentFrame]) {
+    const r = maps.heart[currentFrame]
+    hotspot.style.display = "block"
+    hotspot.style.left = r.x + "px"
+    hotspot.style.top = r.y + "px"
+    hotspot.style.width = r.w + "px"
+    hotspot.style.height = r.h + "px"
+  } else if (!playing && maps.buzzing[currentFrame]) {
+    const r = maps.buzzing[currentFrame]
+    hotspot.style.display = "block"
+    hotspot.style.left = r.x + "px"
+    hotspot.style.top = r.y + "px"
+    hotspot.style.width = r.w + "px"
+    hotspot.style.height = r.h + "px"
+  } else {
+    hotspot.style.display = "none"
+  }
+
+  drawMapperBox()
 }
 
 function nextFrame(){
@@ -220,30 +378,53 @@ function prevFrame(){
   updateFrame()
 }
 
-/* ---------- VIDEO SEQUENCE ---------- */
+/* ---------- RESET ---------- */
 
 function resetSequence(){
   playing = false
   seqIndex = 0
+  heartScrubActive = false
+  buzzingActive = false
 
   videoFull.pause()
   videoWindow.pause()
+  videoHeart.pause()
+  videoBuzzing.pause()
+  heartAudio.pause()
+
+  videoFull.currentTime = 0
+  videoWindow.currentTime = 0
+  videoHeart.currentTime = 0
+  videoBuzzing.currentTime = 0
+  heartAudio.currentTime = 0
 
   videoFull.style.display = "none"
   videoWindow.style.display = "none"
+  videoHeart.style.display = "none"
+  videoBuzzing.style.display = "none"
+  videoHeart.style.opacity = "0"
+  videoBuzzing.style.opacity = "0"
 
   frame.style.display = "block"
   updateFrame()
+
+  videoFull.onended = null
+  videoWindow.onended = null
+  videoHeart.onended = null
+  videoBuzzing.onended = null
 }
 
-function playSequence(){
+/* ---------- SUCKLING SEQUENCE ---------- */
+
+function playSucklingSequence(){
   if(playing) return
   if(currentFrame !== 10) return
 
   playing = true
+  seqIndex = 0
   hotspot.style.display = "none"
 
-  videoFull.src = sequence[0]
+  videoFull.src = sucklingSequence[0]
   videoFull.currentTime = 0
   videoFull.style.display = "block"
 
@@ -255,35 +436,241 @@ function playSequence(){
 
   videoFull.addEventListener("canplay", startNight)
   videoFull.load()
-}
 
-videoFull.onended = () => {
-  if(seqIndex === 0){
-    videoWindow.src = sequence[1]
-    videoWindow.currentTime = 0
-    videoWindow.style.display = "block"
-    videoWindow.play()
-    seqIndex = 1
-  } else if(seqIndex === 2){
-    resetSequence()
+  videoFull.onended = () => {
+    if(seqIndex === 0){
+      videoWindow.src = sucklingSequence[1]
+      videoWindow.currentTime = 0
+      videoWindow.style.display = "block"
+      videoWindow.play()
+      seqIndex = 1
+    } else if(seqIndex === 2){
+      resetSequence()
+    }
+  }
+
+  videoWindow.onended = () => {
+    videoFull.src = sucklingSequence[2]
+    videoFull.currentTime = 0
+    videoFull.style.display = "block"
+
+    const startNightRev = () => {
+      videoWindow.style.display = "none"
+      videoFull.play()
+      seqIndex = 2
+      videoFull.removeEventListener("canplay", startNightRev)
+    }
+
+    videoFull.addEventListener("canplay", startNightRev)
+    videoFull.load()
   }
 }
 
-videoWindow.onended = () => {
-  videoFull.src = sequence[2]
-  videoFull.currentTime = 0
-  videoFull.style.display = "block"
+/* ---------- HEART ---------- */
 
-  const startNightRev = () => {
-    videoWindow.style.display = "none"
-    videoFull.play()
-    seqIndex = 2
-    videoFull.removeEventListener("canplay", startNightRev)
+function playHeart(startAudio = true){
+  if (playing) return
+
+  playing = true
+  hotspot.style.display = "none"
+
+  videoHeart.src = "media/heart.mp4"
+  videoHeart.currentTime = 0
+  videoHeart.style.display = "block"
+  videoHeart.style.opacity = "0"
+
+  const startHeart = () => {
+    if (startAudio) {
+      heartAudio.currentTime = 0
+      heartAudio.play().catch(() => {})
+      fadeAudioIn(heartAudio, 1, 260)
+    }
+
+    requestAnimationFrame(() => {
+      videoHeart.style.opacity = "1"
+    })
+
+    videoHeart.pause()
+    heartScrubActive = true
+
+    videoHeart.removeEventListener("canplay", startHeart)
   }
 
-  videoFull.addEventListener("canplay", startNightRev)
-  videoFull.load()
+  videoHeart.addEventListener("canplay", startHeart)
+  videoHeart.load()
+
+  videoHeart.onended = null
+  videoFull.onended = null
+  videoWindow.onended = null
 }
+
+function closeHeart(){
+  if (!heartScrubActive) return
+
+  heartScrubActive = false
+  playing = false
+
+  videoHeart.style.opacity = "0"
+  fadeAudioOut(heartAudio, 260)
+
+  setTimeout(() => {
+    videoHeart.pause()
+    videoHeart.currentTime = 0
+    videoHeart.style.display = "none"
+    frame.style.display = "block"
+    updateFrame()
+  }, 220)
+}
+
+function moveToFrame15ThenPlayHeart(){
+  if (playing) return
+
+  const ARRIVAL_HOLD_MS = 700
+  const PREROLL_MS = 420
+
+  const arriveAndSummonHeart = () => {
+    setTimeout(() => {
+      heartAudio.currentTime = 0
+      heartAudio.play().catch(() => {})
+      fadeAudioIn(heartAudio, 1, 260)
+
+      setTimeout(() => {
+        playing = false
+        playHeart(false)
+      }, PREROLL_MS)
+
+    }, ARRIVAL_HOLD_MS)
+  }
+
+  if (currentFrame === 15) {
+    playing = true
+    hotspot.style.display = "none"
+    arriveAndSummonHeart()
+    return
+  }
+
+  playing = true
+  hotspot.style.display = "none"
+
+  stage.classList.add("dragging")
+  frame.classList.add("blurring")
+
+  const step = currentFrame < 15 ? 1 : -1
+
+  const moveTo15 = () => {
+    currentFrame += step
+    updateFrame()
+
+    if (currentFrame !== 15) {
+      setTimeout(moveTo15, 150)
+    } else {
+      stage.classList.remove("dragging")
+      frame.classList.remove("blurring")
+      arriveAndSummonHeart()
+    }
+  }
+
+  setTimeout(moveTo15, 120)
+}
+
+/* ---------- BUZZING ---------- */
+
+function playBuzzing(){
+  if (playing) return
+
+  playing = true
+  buzzingActive = true
+  hotspot.style.display = "none"
+
+  videoBuzzing.src = "media/buzzing.mp4"
+  videoBuzzing.currentTime = 0
+  videoBuzzing.style.display = "block"
+  videoBuzzing.style.opacity = "0"
+
+  const startBuzzing = () => {
+    requestAnimationFrame(() => {
+      videoBuzzing.style.opacity = "1"
+    })
+
+    videoBuzzing.play()
+    videoBuzzing.removeEventListener("canplay", startBuzzing)
+  }
+
+  videoBuzzing.addEventListener("canplay", startBuzzing)
+  videoBuzzing.load()
+
+  videoBuzzing.onended = () => {
+    videoBuzzing.style.opacity = "0"
+    setTimeout(() => {
+      closeBuzzing()
+    }, 180)
+  }
+
+  videoFull.onended = null
+  videoWindow.onended = null
+}
+
+function closeBuzzing(){
+  if (!buzzingActive) return
+
+  buzzingActive = false
+  playing = false
+
+  videoBuzzing.style.opacity = "0"
+
+  setTimeout(() => {
+    videoBuzzing.pause()
+    videoBuzzing.currentTime = 0
+    videoBuzzing.style.display = "none"
+    frame.style.display = "block"
+    updateFrame()
+  }, 220)
+}
+
+function moveToFrame4ThenPlayBuzzing(){
+  if (playing) return
+
+  const ARRIVAL_HOLD_MS = 260
+
+  const arriveAndSummonBuzzing = () => {
+    setTimeout(() => {
+      playing = false
+      playBuzzing()
+    }, ARRIVAL_HOLD_MS)
+  }
+
+  if (currentFrame === 4) {
+    playing = true
+    hotspot.style.display = "none"
+    arriveAndSummonBuzzing()
+    return
+  }
+
+  playing = true
+  hotspot.style.display = "none"
+
+  stage.classList.add("dragging")
+  frame.classList.add("blurring")
+
+  const step = currentFrame < 4 ? 1 : -1
+
+  const moveTo4 = () => {
+    currentFrame += step
+    updateFrame()
+
+    if (currentFrame !== 4) {
+      setTimeout(moveTo4, 150)
+    } else {
+      stage.classList.remove("dragging")
+      frame.classList.remove("blurring")
+      arriveAndSummonBuzzing()
+    }
+  }
+
+  setTimeout(moveTo4, 120)
+}
+
+/* ---------- HOTSPOT CLICK ---------- */
 
 hotspot.addEventListener("pointerdown", e => {
   e.stopPropagation()
@@ -291,7 +678,60 @@ hotspot.addEventListener("pointerdown", e => {
 
 hotspot.addEventListener("click", e => {
   e.stopPropagation()
-  playSequence()
+
+  if (playing) return
+
+  if (currentFrame === 10) {
+    playSucklingSequence()
+    return
+  }
+
+  if (maps.heart[currentFrame]) {
+    moveToFrame15ThenPlayHeart()
+    return
+  }
+
+  if (maps.buzzing[currentFrame]) {
+    moveToFrame4ThenPlayBuzzing()
+  }
+})
+
+/* ---------- HEART SCRUB ---------- */
+
+videoHeart.addEventListener("pointerdown", e => {
+  if (!heartScrubActive) return
+  e.stopPropagation()
+  heartScrubLastX = e.clientX
+})
+
+videoHeart.addEventListener("pointermove", e => {
+  if (!heartScrubActive) return
+  if (!(e.buttons & 1)) return
+
+  const dx = e.clientX - heartScrubLastX
+  heartScrubLastX = e.clientX
+
+  const duration = videoHeart.duration || 0
+  if (!duration) return
+
+  let newTime = videoHeart.currentTime + dx * heartScrubSpeed
+
+  while (newTime < 0) newTime += duration
+  while (newTime > duration) newTime -= duration
+
+  videoHeart.currentTime = newTime
+})
+
+videoHeart.addEventListener("dblclick", e => {
+  if (!heartScrubActive) return
+  e.stopPropagation()
+  closeHeart()
+})
+
+videoBuzzing.addEventListener("dblclick", e => {
+  if (!buzzingActive) return
+  e.stopPropagation()
+  closeBuzzing()
 })
 
 /* ---------- POINTER INTERACTION ---------- */
@@ -329,8 +769,28 @@ function stopDrag(){
 }
 
 stage.addEventListener("pointerdown", e => {
-  if (playing) return
   if (e.target === hotspot) return
+
+  if (heartScrubActive) {
+    if (e.target === videoHeart) {
+      heartScrubLastX = e.clientX
+      return
+    } else {
+      closeHeart()
+      return
+    }
+  }
+
+  if (buzzingActive) {
+    if (e.target === videoBuzzing) {
+      return
+    } else {
+      closeBuzzing()
+      return
+    }
+  }
+
+  if (playing) return
 
   pointers.set(e.pointerId, e)
   stage.setPointerCapture(e.pointerId)
@@ -359,7 +819,7 @@ stage.addEventListener("pointermove", e => {
   if (!pointers.has(e.pointerId)) return
   pointers.set(e.pointerId, e)
 
-  if (playing) return
+  if (playing && !heartScrubActive && !buzzingActive) return
 
   if (pointers.size === 2 && pinching){
     const pts = Array.from(pointers.values())
@@ -413,24 +873,7 @@ stage.addEventListener("pointerup", endPointer)
 stage.addEventListener("pointercancel", endPointer)
 stage.addEventListener("pointerleave", endPointer)
 
-/* ---------- DOUBLE TAP / DOUBLE CLICK RESET ---------- */
-
-let lastTap = 0
-stage.addEventListener("click", () => {
-  const now = Date.now()
-  if (now - lastTap < 280 && userScale > 1.02){
-    resetZoom()
-  }
-  lastTap = now
-})
-
-/* ---------- GLOBAL ---------- */
-
-document.addEventListener("touchmove", e => {
-  e.preventDefault()
-}, { passive:false })
-
-window.addEventListener("resize", fitStage)
+/* ---------- WHEEL ZOOM ---------- */
 
 stage.addEventListener("wheel", e => {
   e.preventDefault()
@@ -455,6 +898,76 @@ stage.addEventListener("wheel", e => {
 
   applyTransform()
 }, { passive:false })
+
+/* ---------- DOUBLE TAP / DOUBLE CLICK RESET ---------- */
+
+let lastTap = 0
+stage.addEventListener("click", () => {
+  const now = Date.now()
+  if (now - lastTap < 280 && userScale > 1.02){
+    resetZoom()
+  }
+  lastTap = now
+})
+
+/* ---------- HOTSPOT MAPPER KEYS ---------- */
+
+document.addEventListener("keydown", e => {
+  if (e.key === "m" || e.key === "M") {
+    mapperMode = !mapperMode
+    drawMapperBox()
+    return
+  }
+
+  if (e.key === "[") {
+    currentMapName = "heart"
+    drawMapperBox()
+    return
+  }
+
+  if (e.key === "]") {
+    currentMapName = "buzzing"
+    drawMapperBox()
+    return
+  }
+
+  if (!mapperMode) return
+
+  const map = currentMap()
+
+  if (!map[currentFrame]) {
+    map[currentFrame] = { x: 200, y: 150, w: 120, h: 120 }
+  }
+
+  const r = map[currentFrame]
+  const step = e.shiftKey ? 5 : 1
+
+  if (e.key === "ArrowLeft" && !e.altKey) r.x -= step
+  if (e.key === "ArrowRight" && !e.altKey) r.x += step
+  if (e.key === "ArrowUp" && !e.altKey) r.y -= step
+  if (e.key === "ArrowDown" && !e.altKey) r.y += step
+
+  if (e.altKey && e.key === "ArrowLeft") r.w = Math.max(1, r.w - step)
+  if (e.altKey && e.key === "ArrowRight") r.w += step
+  if (e.altKey && e.key === "ArrowUp") r.h = Math.max(1, r.h - step)
+  if (e.altKey && e.key === "ArrowDown") r.h += step
+
+  if (e.key === "c" || e.key === "C") {
+    console.log(currentMapName + " =", JSON.stringify(map, null, 2))
+  }
+
+  drawMapperBox()
+})
+
+/* ---------- GLOBAL ---------- */
+
+document.addEventListener("touchmove", e => {
+  e.preventDefault()
+}, { passive:false })
+
+window.addEventListener("resize", fitStage)
+
+setTimeout(() => hint.style.opacity = 0, 5000)
 
 fitStage()
 updateFrame()
