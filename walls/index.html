@@ -48,6 +48,7 @@ body{
   overflow:hidden;
   cursor:grab;
   user-select:none;
+  box-shadow: 0 0 40px #000 inset;
 }
 
 #stage.dragging{
@@ -185,7 +186,6 @@ const STAGE_H = 480
 const totalFrames = 23
 
 /* ---------- PRELOAD ROOM FRAMES ---------- */
-
 for (let i = 1; i <= totalFrames; i++) {
   const img = new Image()
   img.src = `frames/frame${i}.png`
@@ -222,7 +222,6 @@ const sucklingSequence = [
 ]
 
 /* ---------- PRELOAD MEDIA ---------- */
-
 [
   "media/night.mp4",
   "media/suckling.mp4",
@@ -230,12 +229,6 @@ const sucklingSequence = [
   "media/heart.mp4",
   "media/buzzing.mp4"
 ].forEach(src => {
-  const v = document.createElement("video")
-  v.src = src
-  v.preload = "auto"
-})
-
-sucklingSequence.forEach(src => {
   const v = document.createElement("video")
   v.src = src
   v.preload = "auto"
