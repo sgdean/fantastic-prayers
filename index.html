@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=no">
 <title>Fantastic Prayers — Walls</title>
 
 <style>
@@ -19,10 +19,26 @@ html, body{
 body{
   position:fixed;
   inset:0;
+  touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
+}
+
+#viewport{
+  position:absolute;
+  inset:0;
   display:flex;
   align-items:center;
   justify-content:center;
-  touch-action:none;
+  overflow:hidden;
+}
+
+#stageWrap{
+  position:relative;
+  width:640px;
+  height:480px;
+  transform-origin:center center;
+  will-change:transform;
 }
 
 #stage{
@@ -32,7 +48,6 @@ body{
   overflow:hidden;
   cursor:grab;
   user-select:none;
-  transform-origin:center center;
 }
 
 #stage.dragging{
@@ -63,6 +78,7 @@ body{
   height:480px;
   display:none;
   z-index:2;
+  object-fit:fill;
 }
 
 #videoWindow{
@@ -73,6 +89,7 @@ body{
   height:220px;
   display:none;
   z-index:3;
+  object-fit:fill;
 }
 
 #hotspot{
@@ -85,20 +102,41 @@ body{
   cursor:pointer;
   z-index:4;
 }
+
+#hint{
+  position:fixed;
+  left:12px;
+  bottom:12px;
+  color:rgba(255,255,255,0.7);
+  font:12px/1.3 Arial, sans-serif;
+  background:rgba(0,0,0,0.35);
+  padding:6px 8px;
+  border-radius:6px;
+  pointer-events:none;
+}
 </style>
 </head>
 
 <body>
 
-<div id="stage">
-  <img id="frame" src="frames/frame10.png" draggable="false">
-  <div id="hotspot"></div>
-  <video id="videoFull" playsinline preload="auto"></video>
-  <video id="videoWindow" playsinline preload="auto"></video>
+<div id="viewport">
+  <div id="stageWrap">
+    <div id="stage">
+      <img id="frame" src="frames/frame10.png" draggable="false">
+      <div id="hotspot"></div>
+      <video id="videoFull" playsinline preload="auto"></video>
+      <video id="videoWindow" playsinline preload="auto"></video>
+    </div>
+  </div>
 </div>
 
+<div id="hint">1 finger = move room · 2 fingers = zoom/pan</div>
+
 <script>
+const STAGE_W = 640
+const STAGE_H = 480
 const totalFrames = 23
+
 let currentFrame = Math.floor(Math.random() * totalFrames) + 1
 let playing = false
 let seqIndex = 0
@@ -108,6 +146,8 @@ const hotspot = document.getElementById("hotspot")
 const videoFull = document.getElementById("videoFull")
 const videoWindow = document.getElementById("videoWindow")
 const stage = document.getElementById("stage")
+const stageWrap = document.getElementById("stageWrap")
+const viewport = document.getElementById("viewport")
 
 const sequence = [
   "media/Night.mp4",
@@ -115,17 +155,51 @@ const sequence = [
   "media/NightRev.mp4"
 ]
 
-const preload = sequence.map(src => {
+sequence.forEach(src => {
   const v = document.createElement("video")
   v.src = src
   v.preload = "auto"
-  return v
 })
 
-function fitStage(){
-  const scale = Math.min(window.innerWidth / 640, window.innerHeight / 480)
-  stage.style.transform = `scale(${scale})`
+/* ---------- FIT / ZOOM / PAN ---------- */
+
+let baseScale = 1
+let userScale = 1
+let panX = 0
+let panY = 0
+
+function clamp(value, min, max){
+  return Math.min(max, Math.max(min, value))
 }
+
+function fitStage(){
+  baseScale = Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H)
+  if (baseScale > 1) baseScale = 1
+  applyTransform()
+}
+
+function applyTransform(){
+  const scale = baseScale * userScale
+  const scaledW = STAGE_W * scale
+  const scaledH = STAGE_H * scale
+
+  const maxPanX = Math.max(0, (scaledW - window.innerWidth) / 2)
+  const maxPanY = Math.max(0, (scaledH - window.innerHeight) / 2)
+
+  panX = clamp(panX, -maxPanX, maxPanX)
+  panY = clamp(panY, -maxPanY, maxPanY)
+
+  stageWrap.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`
+}
+
+function resetZoom(){
+  userScale = 1
+  panX = 0
+  panY = 0
+  applyTransform()
+}
+
+/* ---------- FRAMES ---------- */
 
 function updateFrame(){
   frame.src = "frames/frame" + currentFrame + ".png"
@@ -145,6 +219,8 @@ function prevFrame(){
   if(currentFrame < 1) currentFrame = totalFrames
   updateFrame()
 }
+
+/* ---------- VIDEO SEQUENCE ---------- */
 
 function resetSequence(){
   playing = false
@@ -211,34 +287,34 @@ videoWindow.onended = () => {
 
 hotspot.onclick = playSequence
 
+/* ---------- POINTER INTERACTION ---------- */
+
+let pointers = new Map()
+
 let dragging = false
-let lastFrameX = 0
+let dragStartX = 0
+let dragLastStepX = 0
 const dragThreshold = 80
 
-stage.addEventListener("pointerdown", e => {
-  if(playing) return
-  dragging = true
-  lastFrameX = e.clientX
-  stage.classList.add("dragging")
-  frame.classList.add("blurring")
-})
+let pinching = false
+let pinchStartDistance = 0
+let pinchStartScale = 1
+let pinchStartCenter = null
+let pinchStartPanX = 0
+let pinchStartPanY = 0
 
-stage.addEventListener("pointermove", e => {
-  if(!dragging) return
-  if(playing) return
+function getDistance(a, b){
+  const dx = a.clientX - b.clientX
+  const dy = a.clientY - b.clientY
+  return Math.sqrt(dx * dx + dy * dy)
+}
 
-  const dx = e.clientX - lastFrameX
-
-  if(dx > dragThreshold){
-    prevFrame()
-    lastFrameX = e.clientX
+function getCenter(a, b){
+  return {
+    x: (a.clientX + b.clientX) / 2,
+    y: (a.clientY + b.clientY) / 2
   }
-
-  if(dx < -dragThreshold){
-    nextFrame()
-    lastFrameX = e.clientX
-  }
-})
+}
 
 function stopDrag(){
   dragging = false
@@ -246,9 +322,114 @@ function stopDrag(){
   frame.classList.remove("blurring")
 }
 
-stage.addEventListener("pointerup", stopDrag)
-stage.addEventListener("pointerleave", stopDrag)
-stage.addEventListener("pointercancel", stopDrag)
+stage.addEventListener("pointerdown", e => {
+  if (playing) return
+
+  pointers.set(e.pointerId, e)
+  stage.setPointerCapture(e.pointerId)
+
+  if (pointers.size === 1){
+    dragging = true
+    dragStartX = e.clientX
+    dragLastStepX = e.clientX
+    stage.classList.add("dragging")
+    frame.classList.add("blurring")
+  }
+
+  if (pointers.size === 2){
+    stopDrag()
+    pinching = true
+
+    const pts = Array.from(pointers.values())
+    pinchStartDistance = getDistance(pts[0], pts[1])
+    pinchStartScale = userScale
+    pinchStartCenter = getCenter(pts[0], pts[1])
+    pinchStartPanX = panX
+    pinchStartPanY = panY
+  }
+})
+
+stage.addEventListener("pointermove", e => {
+  if (!pointers.has(e.pointerId)) return
+  pointers.set(e.pointerId, e)
+
+  if (playing) return
+
+  if (pointers.size === 2 && pinching){
+    const pts = Array.from(pointers.values())
+    const dist = getDistance(pts[0], pts[1])
+    const center = getCenter(pts[0], pts[1])
+
+    userScale = clamp((dist / pinchStartDistance) * pinchStartScale, 1, 4)
+
+    panX = pinchStartPanX + (center.x - pinchStartCenter.x)
+    panY = pinchStartPanY + (center.y - pinchStartCenter.y)
+
+    applyTransform()
+    return
+  }
+
+  if (pointers.size === 1 && dragging){
+    const dxTotal = e.clientX - dragStartX
+
+    if (userScale > 1.02){
+      panX += (e.clientX - dragLastStepX)
+      dragLastStepX = e.clientX
+      applyTransform()
+      return
+    }
+
+    const dx = e.clientX - dragLastStepX
+
+    if(dx > dragThreshold){
+      prevFrame()
+      dragLastStepX = e.clientX
+    }
+
+    if(dx < -dragThreshold){
+      nextFrame()
+      dragLastStepX = e.clientX
+    }
+  }
+})
+
+function endPointer(e){
+  pointers.delete(e.pointerId)
+
+  if (pointers.size < 2){
+    pinching = false
+  }
+
+  if (pointers.size === 0){
+    stopDrag()
+  } else if (pointers.size === 1){
+    const remaining = Array.from(pointers.values())[0]
+    dragging = true
+    dragStartX = remaining.clientX
+    dragLastStepX = remaining.clientX
+    if (!playing) {
+      stage.classList.add("dragging")
+      frame.classList.add("blurring")
+    }
+  }
+}
+
+stage.addEventListener("pointerup", endPointer)
+stage.addEventListener("pointercancel", endPointer)
+stage.addEventListener("pointerleave", endPointer)
+
+/* ---------- DOUBLE TAP TO RESET ZOOM ---------- */
+
+let lastTap = 0
+stage.addEventListener("click", e => {
+  const now = Date.now()
+  if (now - lastTap < 280 && userScale > 1.02){
+    resetZoom()
+  }
+  lastTap = now
+})
+
+/* ---------- GLOBAL ---------- */
 
 document.addEventListener("touchmove", e => {
   e.preventDefault()
