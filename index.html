@@ -285,7 +285,14 @@ videoWindow.onended = () => {
   videoFull.load()
 }
 
-hotspot.onclick = playSequence
+hotspot.addEventListener("pointerdown", e => {
+  e.stopPropagation()
+})
+
+hotspot.addEventListener("click", e => {
+  e.stopPropagation()
+  playSequence()
+})
 
 /* ---------- POINTER INTERACTION ---------- */
 
@@ -323,6 +330,7 @@ function stopDrag(){
 
 stage.addEventListener("pointerdown", e => {
   if (playing) return
+  if (e.target === hotspot) return
 
   pointers.set(e.pointerId, e)
   stage.setPointerCapture(e.pointerId)
