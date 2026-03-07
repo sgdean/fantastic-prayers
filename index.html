@@ -2,10 +2,11 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Fantastic Prayers — Walls</title>
 
 <style>
-body{
+html, body{
   margin:0;
   padding:0;
   width:100%;
@@ -28,16 +29,20 @@ body{
   position:relative;
   width:640px;
   height:480px;
-  max-width:100vw;
-  max-height:100vh;
   overflow:hidden;
   cursor:grab;
   user-select:none;
-  touch-action:none;
+  transform-origin:center center;
+}
+
+#stage.dragging{
+  cursor:grabbing;
 }
 
 #frame{
   position:absolute;
+  left:0;
+  top:0;
   width:640px;
   height:480px;
   user-select:none;
@@ -46,7 +51,7 @@ body{
 }
 
 #frame.blurring{
-  filter:blur(3px);
+  filter:blur(2px);
   transform:scale(1.01);
 }
 
@@ -86,7 +91,7 @@ body{
 <body>
 
 <div id="stage">
-  <img id="frame" src="frames/frame10.png">
+  <img id="frame" src="frames/frame10.png" draggable="false">
   <div id="hotspot"></div>
   <video id="videoFull" playsinline preload="auto"></video>
   <video id="videoWindow" playsinline preload="auto"></video>
@@ -116,6 +121,11 @@ const preload = sequence.map(src => {
   v.preload = "auto"
   return v
 })
+
+function fitStage(){
+  const scale = Math.min(window.innerWidth / 640, window.innerHeight / 480)
+  stage.style.transform = `scale(${scale})`
+}
 
 function updateFrame(){
   frame.src = "frames/frame" + currentFrame + ".png"
@@ -173,7 +183,6 @@ function playSequence(){
 
 videoFull.onended = () => {
   if(seqIndex === 0){
-    // KEEP Night visible on its last frame
     videoWindow.src = sequence[1]
     videoWindow.currentTime = 0
     videoWindow.style.display = "block"
@@ -185,7 +194,6 @@ videoFull.onended = () => {
 }
 
 videoWindow.onended = () => {
-  // preload NightRev on the full layer before hiding Suckling
   videoFull.src = sequence[2]
   videoFull.currentTime = 0
   videoFull.style.display = "block"
@@ -242,6 +250,13 @@ stage.addEventListener("pointerup", stopDrag)
 stage.addEventListener("pointerleave", stopDrag)
 stage.addEventListener("pointercancel", stopDrag)
 
+document.addEventListener("touchmove", e => {
+  e.preventDefault()
+}, { passive:false })
+
+window.addEventListener("resize", fitStage)
+
+fitStage()
 updateFrame()
 </script>
 
