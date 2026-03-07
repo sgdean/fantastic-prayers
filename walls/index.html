@@ -184,6 +184,13 @@ const STAGE_W = 640
 const STAGE_H = 480
 const totalFrames = 23
 
+/* ---------- PRELOAD ROOM FRAMES ---------- */
+
+for (let i = 1; i <= totalFrames; i++) {
+  const img = new Image()
+  img.src = `frames/frame${i}.png`
+}
+
 let currentFrame = Math.floor(Math.random() * totalFrames) + 1
 let playing = false
 let seqIndex = 0
@@ -213,6 +220,20 @@ const sucklingSequence = [
   "media/suckling.mp4",
   "media/nightrev.mp4"
 ]
+
+/* ---------- PRELOAD MEDIA ---------- */
+
+[
+  "media/night.mp4",
+  "media/suckling.mp4",
+  "media/nightrev.mp4",
+  "media/heart.mp4",
+  "media/buzzing.mp4"
+].forEach(src => {
+  const v = document.createElement("video")
+  v.src = src
+  v.preload = "auto"
+})
 
 sucklingSequence.forEach(src => {
   const v = document.createElement("video")
