@@ -424,6 +424,30 @@ document.addEventListener("touchmove", e => {
 
 window.addEventListener("resize", fitStage)
 
+stage.addEventListener("wheel", e => {
+  e.preventDefault()
+
+  const rect = stageWrap.getBoundingClientRect()
+  const mouseX = e.clientX - (rect.left + rect.width / 2)
+  const mouseY = e.clientY - (rect.top + rect.height / 2)
+
+  const oldScale = baseScale * userScale
+
+  if (e.deltaY < 0) {
+    userScale = clamp(userScale * 1.08, 1, 4)
+  } else {
+    userScale = clamp(userScale / 1.08, 1, 4)
+  }
+
+  const newScale = baseScale * userScale
+  const scaleRatio = newScale / oldScale
+
+  panX = (panX - mouseX) * scaleRatio + mouseX
+  panY = (panY - mouseY) * scaleRatio + mouseY
+
+  applyTransform()
+}, { passive:false })
+
 fitStage()
 updateFrame()
 </script>
