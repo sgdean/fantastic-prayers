@@ -159,6 +159,18 @@ body{
   pointer-events:none;
   transition:opacity 1s ease;
 }
+
+#mapLabel{
+  position:fixed;
+  right:12px;
+  bottom:12px;
+  color:rgba(255,255,255,0.85);
+  font:12px/1.3 Arial, sans-serif;
+  background:rgba(0,0,0,0.5);
+  padding:6px 8px;
+  border-radius:6px;
+  pointer-events:none;
+}
 </style>
 </head>
 
@@ -178,6 +190,8 @@ body{
   </div>
 </div>
 
+
+<div id="mapLabel"></div>
 <div id="hint">1 finger / mouse drag = move room · 2 fingers = zoom / pan · double tap = reset zoom · heart: drag to rotate · drag outside heart/buzzing to close · m = show mapper · [ / ] = switch map · arrows = move red box · alt+arrows = resize · c = copy coords</div>
 
 <script>
@@ -205,6 +219,7 @@ const stage = document.getElementById("stage")
 const stageWrap = document.getElementById("stageWrap")
 const mapperBox = document.getElementById("mapperBox")
 const hint = document.getElementById("hint")
+const mapLabel = document.getElementById("mapLabel")
 
 const heartAudio = new Audio("audio/heart.wav")
 heartAudio.preload = "auto"
@@ -223,6 +238,7 @@ const maps = {
     16: { x: 204, y: 314, w: 50, h: 51 },
     17: { x: 28,  y: 314, w: 62, h: 64 }
   },
+
   buzzing: {
     2: { x: 556, y: 115, w: 82, h: 59 },
     3: { x: 430, y: 135, w: 72, h: 52 },
@@ -231,7 +247,90 @@ const maps = {
     6: { x: 161, y: 135, w: 71, h: 58 },
     7: { x: 140, y: 130, w: 66, h: 57 },
     8: { x: 40,  y: 115, w: 72, h: 62 }
-  }
+  },
+
+  drum: {
+    17: { x: 481, y: 340, w: 56, h: 64 },
+    18: { x: 387, y: 315, w: 44, h: 56 },
+    19: { x: 325, y: 315, w: 40, h: 52 },
+    20: { x: 220, y: 300, w: 40, h: 48 },
+    21: { x: 180, y: 305, w: 40, h: 52 },
+    22: { x: 145, y: 300, w: 40, h: 52 },
+    23: { x: 0,   y: 325, w: 20, h: 52 }
+  },
+
+  noNotThat: {
+    12: { x: 510, y: 90, w: 48, h: 80 },
+    13: { x: 365, y: 90, w: 52, h: 88 },
+    14: { x: 245, y: 90, w: 56, h: 88 },
+    15: { x: 120, y: 95, w: 60, h: 100 },
+    16: { x: 20,  y: 95, w: 68, h: 96 }
+  },
+
+ doorCreak: {
+  1: [
+    { x: 515, y: 85,  w: 44, h: 64 },
+    { x: 515, y: 85,  w: 44, h: 64 }
+  ],
+  2: [
+    { x: 425, y: 85,  w: 40, h: 56 },
+    { x: 425, y: 85,  w: 40, h: 56 }
+  ],
+  3: [
+    { x: 315, y: 101, w: 36, h: 52 },
+    { x: 515, y: 101, w: 36, h: 52 }
+  ],
+  4: [
+    { x: 250, y: 110, w: 36, h: 52 },
+    { x: 440, y: 110, w: 36, h: 52 }
+  ],
+  5: [
+    { x: 175, y: 100, w: 40, h: 52 },
+    { x: 360, y: 115, w: 40, h: 52 }
+  ],
+  6: [
+    { x: 15,  y: 75,  w: 52, h: 64 },
+    { x: 230, y: 100, w: 52, h: 64 }
+  ],
+  7: [
+    { x: 210, y: 95,  w: 32, h: 64 }
+  ],
+  8: [
+    { x: 120, y: 80,  w: 40, h: 68 }
+  ]
+},
+
+  whisper1: {
+    5:  { x: 524, y: 165, w: 28, h: 80 },
+    6:  { x: 398, y: 175, w: 28, h: 72 },
+    7:  { x: 344, y: 169, w: 28, h: 84 },
+    8:  { x: 280, y: 160, w: 40, h: 84 },
+    9:  { x: 125, y: 165, w: 40, h: 84 },
+    10: { x: 15,  y: 160, w: 44, h: 88 }
+  },
+
+whisper2: {
+  1:  { x: 315, y: 150, w: 28, h: 64 },
+  2:  { x: 225, y: 150, w: 24, h: 64 },
+  3:  { x: 95,  y: 145, w: 28, h: 64 },
+  4:  { x: 10,  y: 150, w: 28, h: 64 },
+  5:  { x: 525, y: 110, w: 28, h: 132 },
+  6:  { x: 400, y: 110, w: 28, h: 144 },
+  7:  { x: 345, y: 105, w: 28, h: 144 },
+  8:  { x: 285, y: 100, w: 32, h: 148 },
+  9:  { x: 125, y: 110, w: 36, h: 140 },
+  10: { x: 15,  y: 100, w: 44, h: 148 },
+  22: { x: 610, y: 135, w: 24, h: 72 },
+  23: { x: 460, y: 150, w: 28, h: 64 }
+},
+listen: {
+  14: { x: 566, y: 185, w: 44, h: 72 },
+  15: { x: 450, y: 205, w: 36, h: 60 },
+  16: { x: 355, y: 205, w: 48, h: 64 },
+  17: { x: 195, y: 210, w: 48, h: 56 },
+  18: { x: 105, y: 205, w: 56, h: 56 },
+  19: { x: 45,  y: 205, w: 56, h: 56 }
+}
 }
 
 let currentMapName = "buzzing"
@@ -239,6 +338,10 @@ let mapperMode = false
 
 function currentMap(){
   return maps[currentMapName]
+}
+
+function updateMapLabel(){
+  mapLabel.textContent = "map: " + currentMapName
 }
 
 /* ---------- FIT / ZOOM / PAN ---------- */
@@ -316,30 +419,41 @@ const MAX_AMBIENT_CHANNELS = 5
 const ambientChannels = []
 
 const ambientSounds = {
+
   drum: {
     file: "audio/drum.wav",
     loop: true,
-    map: {
-      17: { x: 481, y: 340, w: 56, h: 64 },
-      18: { x: 387, y: 315, w: 44, h: 56 },
-      19: { x: 325, y: 315, w: 40, h: 52 },
-      20: { x: 220, y: 300, w: 40, h: 48 },
-      21: { x: 180, y: 305, w: 40, h: 52 },
-      22: { x: 145, y: 300, w: 40, h: 52 },
-      23: { x: 0,   y: 325, w: 20, h: 52 }
-    }
+    map: maps.drum
   },
+
+  doorCreak: {
+    file: "audio/door-creak.wav",
+    loop: true,
+    map: maps.doorCreak
+  },
+
   noNotThat: {
     file: "audio/no-not-that.wav",
     loop: false,
-    map: {
-      12: { x: 510, y: 90, w: 48, h: 80 },
-      13: { x: 365, y: 90, w: 52, h: 88 },
-      14: { x: 245, y: 90, w: 56, h: 88 },
-      15: { x: 120, y: 95, w: 60, h: 100 },
-      16: { x: 20,  y: 95, w: 68, h: 96 }
-    }
-  }
+    map: maps.noNotThat
+  },
+
+  whisper1: {
+    file: "audio/whisper1.wav",
+    loop: false,
+    map: maps.whisper1
+  },
+
+  whisper2: {
+    file: "audio/whisper2.wav",
+    loop: false,
+    map: maps.whisper2
+  },
+  listen: {
+  file: "audio/listen.wav",
+  loop: false,
+  map: maps.listen
+}
 }
 
 let touchTapStartX = 0
@@ -447,15 +561,19 @@ function getAmbientMatches(x, y){
   const matches = []
 
   for (const name in ambientSounds){
-    const rect = ambientSounds[name].map[currentFrame]
-    if (!rect) continue
+    const frameEntry = ambientSounds[name].map[currentFrame]
+    if (!frameEntry) continue
 
-    if (
+    const boxes = Array.isArray(frameEntry) ? frameEntry : [frameEntry]
+
+    const hit = boxes.some(rect =>
       x >= rect.x &&
       x <= rect.x + rect.w &&
       y >= rect.y &&
       y <= rect.y + rect.h
-    ){
+    )
+
+    if (hit) {
       matches.push(name)
     }
   }
@@ -485,6 +603,7 @@ function checkAmbientHotspots(x, y, source = "pointer"){
 /* ---------- HOTSPOT MAPPER ---------- */
 
 function drawMapperBox(){
+  updateMapLabel()
   const map = currentMap()
   if (!mapperMode || !map[currentFrame]) {
     mapperBox.style.display = "none"
@@ -1159,17 +1278,22 @@ document.addEventListener("keydown", e => {
     return
   }
 
-  if (e.key === "[") {
-    currentMapName = "heart"
-    drawMapperBox()
-    return
-  }
+const mapNames = ["heart", "buzzing", "drum", "noNotThat", "doorCreak", "whisper1", "whisper2","listen"]
+let currentIndex = mapNames.indexOf(currentMapName)
 
-  if (e.key === "]") {
-    currentMapName = "buzzing"
-    drawMapperBox()
-    return
-  }
+if (e.key === "[") {
+  currentIndex = (currentIndex - 1 + mapNames.length) % mapNames.length
+  currentMapName = mapNames[currentIndex]
+  drawMapperBox()
+  return
+}
+
+if (e.key === "]") {
+  currentIndex = (currentIndex + 1) % mapNames.length
+  currentMapName = mapNames[currentIndex]
+  drawMapperBox()
+  return
+}
 
   if (!mapperMode) return
 
@@ -1210,6 +1334,7 @@ window.addEventListener("resize", fitStage)
 
 setTimeout(() => hint.style.opacity = 0, 5000)
 
+updateMapLabel()
 fitStage()
 updateFrame()
 </script>
