@@ -947,6 +947,11 @@ stage.addEventListener("touchstart", e => {
   )
 
   matches.forEach(name => startAmbientSound(name, "touch"))
+
+  if (matches.length > 0) {
+  e.stopPropagation()
+  return
+}
 })
 
 stage.addEventListener("touchend", () => {
