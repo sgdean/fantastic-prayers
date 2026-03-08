@@ -346,6 +346,7 @@ let mouseInsideStage = false
 let lastMouseStageX = null
 let lastMouseStageY = null
 let activeTouchLoopNames = new Set()
+let activePointerAmbientMatches = new Set()
 
 function ambientVolumeForCount(count){
   if (count <= 1) return 1
@@ -403,7 +404,13 @@ function startAmbientSound(name, source = "pointer"){
   if (!sound) return
 
   const already = ambientChannels.find(ch => ch.name === name)
-  if (already) return
+
+  if (already) {
+    if (already.loop) {
+      fadeOutAndRemove(already, 200)
+    }
+    return
+  }
 
   if (ambientChannels.length >= MAX_AMBIENT_CHANNELS) {
     const victim = ambientChannels[Math.floor(Math.random() * ambientChannels.length)]
@@ -454,8 +461,22 @@ function getAmbientMatches(x, y){
 
 function checkAmbientHotspots(x, y, source = "pointer"){
   const matches = getAmbientMatches(x, y)
+  const currentMatches = new Set(matches)
+
+  if (source === "pointer") {
+    matches.forEach(name => {
+      if (!activePointerAmbientMatches.has(name)) {
+        startAmbientSound(name, source)
+      }
+    })
+
+    activePointerAmbientMatches = currentMatches
+    return
+  }
+
   matches.forEach(name => startAmbientSound(name, source))
 }
+
 
 /* ---------- HOTSPOT MAPPER ---------- */
 
@@ -910,6 +931,7 @@ stage.addEventListener("mouseleave", () => {
   mouseInsideStage = false
   lastMouseStageX = null
   lastMouseStageY = null
+  activePointerAmbientMatches.clear()
 })
 
 stage.addEventListener("touchstart", e => {
