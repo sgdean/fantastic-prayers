@@ -122,6 +122,20 @@ body{
   cursor:default;
 }
 
+#videoMK{
+  position:absolute;
+  left:242px;
+  top:103px;
+  width:136px;
+  height:216px;
+  display:none;
+  z-index:3;
+  object-fit:fill;
+  opacity:0;
+  transition:opacity 520ms ease;
+  cursor:default;
+}
+
 #hotspot{
   position:absolute;
   left:210px;
@@ -185,6 +199,7 @@ body{
       <video id="videoWindow" playsinline preload="auto"></video>
       <video id="videoHeart" playsinline preload="auto"></video>
       <video id="videoBuzzing" playsinline preload="auto"></video>
+      <video id="videoMK" playsinline preload="auto"></video>
       <div id="mapperBox"></div>
     </div>
   </div>
@@ -207,6 +222,10 @@ let heartScrubActive = false
 let heartScrubLastX = 0
 const heartScrubSpeed = 0.0035
 
+let nextMK = 1
+let mkActive = false
+let mkArmed = true
+
 let buzzingActive = false
 
 const frame = document.getElementById("frame")
@@ -215,6 +234,7 @@ const videoFull = document.getElementById("videoFull")
 const videoWindow = document.getElementById("videoWindow")
 const videoHeart = document.getElementById("videoHeart")
 const videoBuzzing = document.getElementById("videoBuzzing")
+const videoMK = document.getElementById("videoMK")
 const stage = document.getElementById("stage")
 const stageWrap = document.getElementById("stageWrap")
 const mapperBox = document.getElementById("mapperBox")
@@ -330,6 +350,14 @@ listen: {
   17: { x: 195, y: 210, w: 48, h: 56 },
   18: { x: 105, y: 205, w: 56, h: 56 },
   19: { x: 45,  y: 205, w: 56, h: 56 }
+},
+mikeKelley: {
+  18: { x: 414, y: 0,  w: 152, h: 44 },
+  19: { x: 350, y: 0,  w: 144, h: 48 },
+  20: { x: 250, y: 30, w: 120, h: 52 },
+  21: { x: 210, y: 25, w: 120, h: 40 },
+  22: { x: 170, y: 35, w: 136, h: 36 },
+  23: { x: 10,  y: 0,  w: 168, h: 56 }
 }
 }
 
@@ -643,6 +671,13 @@ function updateFrame(){
     hotspot.style.top = r.y + "px"
     hotspot.style.width = r.w + "px"
     hotspot.style.height = r.h + "px"
+  } else if (!playing && maps.mikeKelley[currentFrame]) {
+    const r = maps.mikeKelley[currentFrame]
+    hotspot.style.display = "block"
+    hotspot.style.left = r.x + "px"
+    hotspot.style.top = r.y + "px"
+    hotspot.style.width = r.w + "px"
+    hotspot.style.height = r.h + "px"
   } else {
     hotspot.style.display = "none"
   }
@@ -657,15 +692,31 @@ function updateFrame(){
 
 function nextFrame(){
   if(playing) return
+
+  const oldFrame = currentFrame
+
   currentFrame++
   if(currentFrame > totalFrames) currentFrame = 1
+
+  if (oldFrame === 23 && currentFrame === 1) {
+    mkArmed = true
+  }
+
   updateFrame()
 }
 
 function prevFrame(){
   if(playing) return
+
+  const oldFrame = currentFrame
+
   currentFrame--
   if(currentFrame < 1) currentFrame = totalFrames
+
+  if (oldFrame === 1 && currentFrame === 23) {
+    mkArmed = true
+  }
+
   updateFrame()
 }
 
@@ -705,6 +756,12 @@ function resetSequence(){
   videoWindow.onended = null
   videoHeart.onended = null
   videoBuzzing.onended = null
+
+  mkActive = false
+  mkArmed = true
+  videoMK.pause()
+  videoMK.currentTime = 0
+  videoMK.style.display = "none"
 }
 
 /* ---------- SUCKLING SEQUENCE ---------- */
@@ -817,6 +874,28 @@ function closeHeart(){
     frame.style.display = "block"
     updateFrame()
   }, 220)
+}
+
+function closeMK(advanceSequence = false){
+  if (!mkActive) return
+
+  mkActive = false
+  playing = false
+
+videoMK.style.opacity = "0"
+
+setTimeout(() => {
+  videoMK.pause()
+  videoMK.currentTime = 0
+  videoMK.style.display = "none"
+}, 520)
+
+  if (advanceSequence) {
+    nextMK = nextMK === 1 ? 2 : 1
+  }
+
+  frame.style.display = "block"
+  updateFrame()
 }
 
 function moveToFrame15ThenPlayHeart(){
@@ -969,6 +1048,77 @@ function moveToFrame4ThenPlayBuzzing(){
   setTimeout(moveTo4, 120)
 }
 
+
+/* ---------- MIKE KELLEY ---------- */
+
+function playMK(){
+  stopAllAmbientSounds()
+
+  playing = true
+  mkActive = true
+  mkArmed = false
+  hotspot.style.display = "none"
+
+  const src = nextMK === 1 ? "media/mk01.mp4" : "media/mk02.mp4"
+
+videoMK.src = src
+videoMK.currentTime = 0
+videoMK.style.display = "block"
+videoMK.style.opacity = "0"
+
+const startMK = () => {
+  requestAnimationFrame(() => {
+    videoMK.style.opacity = "1"
+  })
+
+  videoMK.play()
+  videoMK.removeEventListener("canplay", startMK)
+}
+
+videoMK.addEventListener("canplay", startMK)
+videoMK.load()
+
+  videoMK.onended = () => {
+    closeMK(true)
+  }
+}
+
+function moveToFrame21ThenPlayMK(){
+
+  if (playing) return
+
+  playing = true
+  hotspot.style.display = "none"
+
+  stage.classList.add("dragging")
+  frame.classList.add("blurring")
+
+  const step = currentFrame < 21 ? 1 : -1
+
+  const move = () => {
+
+    currentFrame += step
+    updateFrame()
+
+    if (currentFrame !== 21) {
+      setTimeout(move, 150)
+    } else {
+
+      stage.classList.remove("dragging")
+      frame.classList.remove("blurring")
+
+playMK()
+
+setTimeout(() => {
+  playing = false
+}, 180)
+    }
+  }
+
+  setTimeout(move,120)
+}
+
+
 /* ---------- HOTSPOT CLICK ---------- */
 
 hotspot.addEventListener("pointerdown", e => {
@@ -993,6 +1143,12 @@ hotspot.addEventListener("click", e => {
   if (maps.buzzing[currentFrame]) {
     moveToFrame4ThenPlayBuzzing()
   }
+
+if (maps.mikeKelley[currentFrame]) {
+  if (!mkArmed) return
+  moveToFrame21ThenPlayMK()
+  return
+}
 })
 
 /* ---------- HEART SCRUB ---------- */
@@ -1031,6 +1187,12 @@ videoBuzzing.addEventListener("dblclick", e => {
   if (!buzzingActive) return
   e.stopPropagation()
   closeBuzzing()
+})
+
+videoMK.addEventListener("dblclick", e => {
+  if (!mkActive) return
+  e.stopPropagation()
+  closeMK(false)
 })
 
 /* ---------- AMBIENT HOVER / TOUCH ---------- */
@@ -1149,6 +1311,14 @@ stage.addEventListener("pointerdown", e => {
     }
   }
 
+    if (mkActive) {
+    if (e.target === videoMK) {
+      return
+    } else {
+      closeMK(false)
+    }
+  }
+
   if (playing) return
 
   pointers.set(e.pointerId, e)
@@ -1178,7 +1348,7 @@ stage.addEventListener("pointermove", e => {
   if (!pointers.has(e.pointerId)) return
   pointers.set(e.pointerId, e)
 
-  if (playing && !heartScrubActive && !buzzingActive) return
+  if (playing && !heartScrubActive && !buzzingActive && !mkActive) return
 
   if (pointers.size === 2 && pinching){
     const pts = Array.from(pointers.values())
@@ -1278,7 +1448,7 @@ document.addEventListener("keydown", e => {
     return
   }
 
-const mapNames = ["heart", "buzzing", "drum", "noNotThat", "doorCreak", "whisper1", "whisper2","listen"]
+const mapNames = ["heart", "buzzing", "drum", "noNotThat", "doorCreak", "whisper1", "whisper2","listen","mikeKelley"]
 let currentIndex = mapNames.indexOf(currentMapName)
 
 if (e.key === "[") {
