@@ -1383,6 +1383,11 @@ hotspot.addEventListener("click", e => {
     return
   }
 
+  if (maps.buzzing[currentFrame]) {
+    moveToFrame4ThenPlayBuzzing()
+    return
+  }
+
   if (maps.nakedGuy[currentFrame]) {
     if (!nakedArmed) return
 
@@ -1395,11 +1400,6 @@ hotspot.addEventListener("click", e => {
     videoNakedSmall.style.display = "none"
 
     moveToFrame3ThenPlayNakedGuy()
-    return
-}
-
-  if (maps.buzzing[currentFrame]) {
-    moveToFrame4ThenPlayBuzzing()
     return
   }
 
