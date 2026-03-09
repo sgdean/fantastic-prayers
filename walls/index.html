@@ -122,6 +122,34 @@ body{
   cursor:default;
 }
 
+#videoNakedLarge{
+  position:absolute;
+  left:90px;
+  top:172px;
+  width:320px;
+  height:296px;
+  display:none;
+  z-index:3;
+  object-fit:fill;
+  opacity:0;
+  transition:opacity 320ms ease;
+  cursor:ew-resize;
+}
+
+#videoNakedSmall{
+  position:absolute;
+  left:208px;
+  top:394px;
+  width:64px;
+  height:64px;
+  display:none;
+  z-index:3;
+  object-fit:fill;
+  opacity:0;
+  transition:opacity 320ms ease;
+  cursor:ew-resize;
+}
+
 #videoMK{
   position:absolute;
   left:242px;
@@ -175,6 +203,7 @@ body{
 }
 
 #mapLabel{
+  display:none; /* change to block when mapping */
   position:fixed;
   right:12px;
   bottom:12px;
@@ -200,6 +229,8 @@ body{
       <video id="videoHeart" playsinline preload="auto"></video>
       <video id="videoBuzzing" playsinline preload="auto"></video>
       <video id="videoMK" playsinline preload="auto"></video>
+      <video id="videoNakedLarge" playsinline preload="auto"></video>
+      <video id="videoNakedSmall" playsinline preload="auto"></video>
       <div id="mapperBox"></div>
     </div>
   </div>
@@ -226,6 +257,15 @@ let nextMK = 1
 let mkActive = false
 let mkArmed = true
 
+let nakedLargePlayed = false
+let nakedActive = false
+let nakedArmed = true
+let nakedLargeDirection = 1
+let nakedSmallDirection = 1
+let nakedLargeReverseTimer = null
+let nakedSmallReverseTimer = null
+let nakedLargePending = false
+
 let buzzingActive = false
 
 const frame = document.getElementById("frame")
@@ -234,6 +274,8 @@ const videoFull = document.getElementById("videoFull")
 const videoWindow = document.getElementById("videoWindow")
 const videoHeart = document.getElementById("videoHeart")
 const videoBuzzing = document.getElementById("videoBuzzing")
+const videoNakedLarge = document.getElementById("videoNakedLarge")
+const videoNakedSmall = document.getElementById("videoNakedSmall")
 const videoMK = document.getElementById("videoMK")
 const stage = document.getElementById("stage")
 const stageWrap = document.getElementById("stageWrap")
@@ -358,6 +400,13 @@ mikeKelley: {
   21: { x: 210, y: 25, w: 120, h: 40 },
   22: { x: 170, y: 35, w: 136, h: 36 },
   23: { x: 10,  y: 0,  w: 168, h: 56 }
+},
+nakedGuy: {
+  1: { x: 465, y: 245, w: 60, h: 120 },
+  2: { x: 375, y: 245, w: 64, h: 120 },
+  3: { x: 260, y: 239, w: 72, h: 120 },
+  4: { x: 195, y: 238, w: 68, h: 120 },
+  5: { x: 125, y: 255, w: 68, h: 120 }
 }
 }
 
@@ -384,8 +433,7 @@ function clamp(value, min, max){
 }
 
 function fitStage(){
-  baseScale = Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H)
-  if (baseScale > 1) baseScale = 1
+  baseScale = Math.max(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H)
   applyTransform()
 }
 
@@ -401,6 +449,7 @@ function applyTransform(){
   panY = clamp(panY, -maxPanY, maxPanY)
 
   stageWrap.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`
+
 }
 
 function resetZoom(){
@@ -664,6 +713,13 @@ function updateFrame(){
     hotspot.style.top = r.y + "px"
     hotspot.style.width = r.w + "px"
     hotspot.style.height = r.h + "px"
+  } else if (maps.nakedGuy[currentFrame] && !nakedActive && nakedArmed) {
+    const r = maps.nakedGuy[currentFrame]
+    hotspot.style.display = "block"
+    hotspot.style.left = r.x + "px"
+    hotspot.style.top = r.y + "px"
+    hotspot.style.width = r.w + "px"
+    hotspot.style.height = r.h + "px"
   } else if (!playing && maps.buzzing[currentFrame]) {
     const r = maps.buzzing[currentFrame]
     hotspot.style.display = "block"
@@ -671,7 +727,7 @@ function updateFrame(){
     hotspot.style.top = r.y + "px"
     hotspot.style.width = r.w + "px"
     hotspot.style.height = r.h + "px"
-  } else if (!playing && maps.mikeKelley[currentFrame]) {
+  } else if (!playing && maps.mikeKelley[currentFrame] && mkArmed) {
     const r = maps.mikeKelley[currentFrame]
     hotspot.style.display = "block"
     hotspot.style.left = r.x + "px"
@@ -681,6 +737,30 @@ function updateFrame(){
   } else {
     hotspot.style.display = "none"
   }
+
+
+/* nakedGuy idle logic */
+
+if (!nakedActive && !nakedLargePending && nakedLargePlayed && currentFrame === 3) {
+
+  if (videoNakedSmall.style.display !== "block") {
+    playNakedGuySmall()
+  }
+
+} else {
+
+  if (videoNakedSmall.style.display === "block") {
+    stopNakedSmallReverse()
+    videoNakedSmall.style.opacity = "0"
+
+    setTimeout(() => {
+      videoNakedSmall.pause()
+      videoNakedSmall.currentTime = 0
+      videoNakedSmall.style.display = "none"
+    }, 320)
+  }
+
+}
 
   drawMapperBox()
 
@@ -700,6 +780,7 @@ function nextFrame(){
 
   if (oldFrame === 23 && currentFrame === 1) {
     mkArmed = true
+    nakedArmed = true
   }
 
   updateFrame()
@@ -715,6 +796,7 @@ function prevFrame(){
 
   if (oldFrame === 1 && currentFrame === 23) {
     mkArmed = true
+    nakedArmed = true
   }
 
   updateFrame()
@@ -1054,6 +1136,165 @@ function moveToFrame21ThenPlayMK(){
   })
 }
 
+function moveToFrame3ThenPlayNakedGuy(){
+  moveToFrame(3, () => {
+    setTimeout(() => {
+      playing = false
+      playNakedGuyLarge()
+    }, 200)
+  })
+}
+
+/* ---------- NAKED GUY ---------- */
+
+function playNakedGuyLarge(){
+
+  nakedLargePending = false
+
+  playing = true
+  nakedActive = true
+  nakedArmed = false
+  hotspot.style.display = "none"
+
+  videoNakedSmall.pause()
+  videoNakedSmall.style.display = "none"
+
+  videoNakedLarge.src = "media/naked-guy-large.mp4"
+  videoNakedLarge.loop = true
+  videoNakedLarge.currentTime = Math.random() * 8
+  videoNakedLarge.style.display = "block"
+  videoNakedLarge.style.opacity = "0"
+
+  const start = () => {
+
+    requestAnimationFrame(()=>{
+      videoNakedLarge.style.opacity = "1"
+    })
+
+    playNakedLargeForward()
+
+    videoNakedLarge.removeEventListener("canplay", start)
+  }
+
+  videoNakedLarge.addEventListener("canplay", start)
+  videoNakedLarge.load()
+
+  nakedLargePlayed = true
+}
+
+function playNakedGuySmall(){
+
+  videoNakedSmall.pause()
+  videoNakedSmall.currentTime = 0
+
+  videoNakedSmall.src = "media/naked-guy-small.mp4"
+  videoNakedSmall.loop = true
+  videoNakedSmall.style.display = "block"
+  videoNakedSmall.style.opacity = "0"
+
+  const start = () => {
+
+    requestAnimationFrame(()=>{
+      videoNakedSmall.style.opacity = "1"
+    })
+
+    playNakedSmallForward()
+
+    videoNakedSmall.removeEventListener("canplay", start)
+
+  }
+
+  videoNakedSmall.addEventListener("canplay", start, { once:true })
+  videoNakedSmall.load()
+
+}
+
+function closeNakedGuy(){
+
+  stopNakedLargeReverse()
+
+  if (!nakedActive) return
+
+  nakedActive = false
+  playing = false
+
+  videoNakedLarge.style.opacity = "0"
+
+  setTimeout(()=>{
+
+    videoNakedLarge.pause()
+    videoNakedLarge.currentTime = 0
+    videoNakedLarge.style.display = "none"
+
+    if (nakedLargePlayed && currentFrame === 3){
+      playNakedGuySmall()
+    }
+
+    updateFrame()
+
+  },320)
+}
+
+function stopNakedLargeReverse(){
+  if (nakedLargeReverseTimer) {
+    clearInterval(nakedLargeReverseTimer)
+    nakedLargeReverseTimer = null
+  }
+}
+
+function stopNakedSmallReverse(){
+  if (nakedSmallReverseTimer) {
+    clearInterval(nakedSmallReverseTimer)
+    nakedSmallReverseTimer = null
+  }
+}
+
+function playNakedLargeForward(){
+  stopNakedLargeReverse()
+  nakedLargeDirection = 1
+  videoNakedLarge.playbackRate = 1
+  videoNakedLarge.play()
+}
+
+function playNakedSmallForward(){
+  stopNakedSmallReverse()
+  nakedSmallDirection = 1
+  videoNakedSmall.playbackRate = 1
+  videoNakedSmall.play()
+}
+
+function playNakedLargeReverse(){
+  stopNakedLargeReverse()
+  videoNakedLarge.pause()
+  nakedLargeDirection = -1
+
+  nakedLargeReverseTimer = setInterval(() => {
+    const step = 1 / 30
+    const duration = videoNakedLarge.duration || 0
+    if (!duration) return
+
+    let t = videoNakedLarge.currentTime - step
+    if (t <= 0) t = duration
+    videoNakedLarge.currentTime = t
+  }, 33)
+}
+
+function playNakedSmallReverse(){
+  stopNakedSmallReverse()
+  videoNakedSmall.pause()
+  nakedSmallDirection = -1
+
+  nakedSmallReverseTimer = setInterval(() => {
+    const step = 1 / 30
+    const duration = videoNakedSmall.duration || 0
+    if (!duration) return
+
+    let t = videoNakedSmall.currentTime - step
+    if (t <= 0) t = duration
+    videoNakedSmall.currentTime = t
+  }, 33)
+}
+
 
 /* ---------- HOTSPOT CLICK ---------- */
 
@@ -1075,6 +1316,21 @@ hotspot.addEventListener("click", e => {
     moveToFrame15ThenPlayHeart()
     return
   }
+
+  if (maps.nakedGuy[currentFrame]) {
+    if (!nakedArmed) return
+
+    nakedLargePending = true
+
+    stopNakedSmallReverse()
+    videoNakedSmall.pause()
+    videoNakedSmall.currentTime = 0
+    videoNakedSmall.style.opacity = "0"
+    videoNakedSmall.style.display = "none"
+
+    moveToFrame3ThenPlayNakedGuy()
+    return
+}
 
   if (maps.buzzing[currentFrame]) {
     moveToFrame4ThenPlayBuzzing()
@@ -1130,6 +1386,26 @@ videoMK.addEventListener("dblclick", e => {
   if (!mkActive) return
   e.stopPropagation()
   closeMK(false)
+})
+
+videoNakedLarge.addEventListener("pointerdown", e => {
+  e.stopPropagation()
+
+  if (nakedLargeDirection === 1) {
+    playNakedLargeReverse()
+  } else {
+    playNakedLargeForward()
+  }
+})
+
+videoNakedSmall.addEventListener("pointerdown", e => {
+  e.stopPropagation()
+
+  if (nakedSmallDirection === 1) {
+    playNakedSmallReverse()
+  } else {
+    playNakedSmallForward()
+  }
 })
 
 /* ---------- AMBIENT HOVER / TOUCH ---------- */
@@ -1255,6 +1531,15 @@ stage.addEventListener("pointerdown", e => {
       closeMK(false)
     }
   }
+
+    if (nakedActive) {
+      if (e.target === videoNakedLarge || e.target === videoNakedSmall) {
+        return
+      } else {
+        closeNakedGuy()
+      }
+    }
+
 
   if (playing) return
 
@@ -1385,7 +1670,7 @@ document.addEventListener("keydown", e => {
     return
   }
 
-const mapNames = ["heart", "buzzing", "drum", "noNotThat", "doorCreak", "whisper1", "whisper2","listen","mikeKelley"]
+const mapNames = ["heart", "buzzing", "drum", "noNotThat", "doorCreak", "whisper1", "whisper2","listen","mikeKelley","nakedGuy"]
 let currentIndex = mapNames.indexOf(currentMapName)
 
 if (e.key === "[") {
