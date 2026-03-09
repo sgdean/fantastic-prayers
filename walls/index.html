@@ -266,6 +266,7 @@ let nakedSmallDirection = 1
 let nakedLargeReverseTimer = null
 let nakedSmallReverseTimer = null
 let nakedLargePending = false
+let nakedSmallHideTimer = null
 
 let buzzingActive = false
 
@@ -621,11 +622,16 @@ function startAmbientSound(name, source = "pointer"){
     fading: false
   }
 
-  audio.loop = sound.loop
-  ambientChannels.push(channel)
-  updateAmbientVolumes()
+audio.loop = sound.loop
+ambientChannels.push(channel)
 
-  audio.play().catch(() => {})
+audio.play()
+  .then(() => {
+    updateAmbientVolumes()
+  })
+  .catch(() => {})
+
+updateAmbientVolumes()
 
   if (!sound.loop) {
     audio.onended = () => {
@@ -742,7 +748,15 @@ function updateFrame(){
 
 /* nakedGuy idle logic */
 
+
+/* nakedGuy idle logic */
+
 if (!nakedActive && !nakedLargePending && nakedLargePlayed && currentFrame === 3) {
+
+  if (nakedSmallHideTimer) {
+    clearTimeout(nakedSmallHideTimer)
+    nakedSmallHideTimer = null
+  }
 
   if (videoNakedSmall.style.display !== "block") {
     playNakedGuySmall()
@@ -754,10 +768,13 @@ if (!nakedActive && !nakedLargePending && nakedLargePlayed && currentFrame === 3
     stopNakedSmallReverse()
     videoNakedSmall.style.opacity = "0"
 
-    setTimeout(() => {
+    if (nakedSmallHideTimer) clearTimeout(nakedSmallHideTimer)
+
+    nakedSmallHideTimer = setTimeout(() => {
       videoNakedSmall.pause()
       videoNakedSmall.currentTime = 0
       videoNakedSmall.style.display = "none"
+      nakedSmallHideTimer = null
     }, 320)
   }
 
@@ -845,6 +862,25 @@ function resetSequence(){
   videoMK.pause()
   videoMK.currentTime = 0
   videoMK.style.display = "none"
+
+  stopNakedLargeReverse()
+  stopNakedSmallReverse()
+
+  nakedActive = false
+  nakedArmed = true
+  nakedLargePending = false
+  nakedLargeDirection = 1
+  nakedSmallDirection = 1
+
+  videoNakedLarge.pause()
+  videoNakedLarge.currentTime = 0
+  videoNakedLarge.style.display = "none"
+  videoNakedLarge.style.opacity = "0"
+
+  videoNakedSmall.pause()
+  videoNakedSmall.currentTime = 0
+  videoNakedSmall.style.display = "none"
+  videoNakedSmall.style.opacity = "0"
 }
 
 /* ---------- SUCKLING SEQUENCE ---------- */
@@ -1158,30 +1194,34 @@ function playNakedGuyLarge(){
   hotspot.style.display = "none"
 
   videoNakedSmall.pause()
+  videoNakedSmall.currentTime = 0
+  videoNakedSmall.style.opacity = "0"
   videoNakedSmall.style.display = "none"
 
+  videoNakedLarge.pause()
+  videoNakedLarge.currentTime = 0
   videoNakedLarge.src = "media/naked-guy-large.mp4"
   videoNakedLarge.loop = true
-  videoNakedLarge.currentTime = Math.random() * 8
   videoNakedLarge.style.display = "block"
   videoNakedLarge.style.opacity = "0"
 
   const start = () => {
+    const duration = videoNakedLarge.duration || 8
+    videoNakedLarge.currentTime = Math.random() * duration
 
-    requestAnimationFrame(()=>{
+    requestAnimationFrame(() => {
       videoNakedLarge.style.opacity = "1"
     })
 
     playNakedLargeForward()
-
-    videoNakedLarge.removeEventListener("canplay", start)
   }
 
-  videoNakedLarge.addEventListener("canplay", start)
+  videoNakedLarge.addEventListener("canplay", start, { once:true })
   videoNakedLarge.load()
 
   nakedLargePlayed = true
 }
+
 
 function playNakedGuySmall(){
 
