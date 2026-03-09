@@ -258,6 +258,7 @@ const STAGE_W = 640
 const STAGE_H = 480
 const totalFrames = 23
 
+let stageMode = "fit" // "fit" or "fill"
 let currentFrame = Math.floor(Math.random() * totalFrames) + 1
 let playing = false
 let seqIndex = 0
@@ -448,7 +449,11 @@ function clamp(value, min, max){
 }
 
 function fitStage(){
-  baseScale = Math.max(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H)
+  if (stageMode === "fill") {
+    baseScale = Math.max(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H)
+  } else {
+    baseScale = Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H)
+  }
   applyTransform()
 }
 
@@ -468,6 +473,7 @@ function applyTransform(){
 }
 
 function resetZoom(){
+  stageMode = "fit"
   userScale = 1
   panX = 0
   panY = 0
@@ -1766,6 +1772,13 @@ document.addEventListener("keydown", e => {
     drawMapperBox()
     return
   }
+
+document.addEventListener("keydown", e => {
+  if (e.key === "f" || e.key === "F") {
+    stageMode = stageMode === "fit" ? "fill" : "fit"
+    fitStage()
+  }
+})
 
 const mapNames = ["heart", "buzzing", "drum", "noNotThat", "doorCreak", "whisper1", "whisper2","listen","mikeKelley","nakedGuy"]
 let currentIndex = mapNames.indexOf(currentMapName)
