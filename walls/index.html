@@ -491,7 +491,6 @@ const touchTapThreshold = 12
 let mouseInsideStage = false
 let lastMouseStageX = null
 let lastMouseStageY = null
-let activeTouchLoopNames = new Set()
 let activePointerAmbientMatches = new Set()
 
 function ambientVolumeForCount(count){
@@ -638,7 +637,8 @@ function drawMapperBox(){
     return
   }
 
-  const r = map[currentFrame]
+  const entry = map[currentFrame]
+  const r = Array.isArray(entry) ? entry[0] : entry
   mapperBox.style.display = "block"
   mapperBox.style.left = r.x + "px"
   mapperBox.style.top = r.y + "px"
@@ -770,7 +770,7 @@ function playSucklingSequence(){
   if(playing) return
   if(currentFrame !== 10) return
 
-    stopAllAmbientSounds()
+  stopAllAmbientSounds()
 
   playing = true
   seqIndex = 0
@@ -882,13 +882,13 @@ function closeMK(advanceSequence = false){
   mkActive = false
   playing = false
 
-videoMK.style.opacity = "0"
+  videoMK.style.opacity = "0"
 
-setTimeout(() => {
-  videoMK.pause()
-  videoMK.currentTime = 0
-  videoMK.style.display = "none"
-}, 520)
+  setTimeout(() => {
+    videoMK.pause()
+    videoMK.currentTime = 0
+    videoMK.style.display = "none"
+  }, 520)
 
   if (advanceSequence) {
     nextMK = nextMK === 1 ? 2 : 1
@@ -898,13 +898,40 @@ setTimeout(() => {
   updateFrame()
 }
 
-function moveToFrame15ThenPlayHeart(){
+function moveToFrame(targetFrame, onArrival) {
   if (playing) return
 
-  const ARRIVAL_HOLD_MS = 700
-  const PREROLL_MS = 420
+  playing = true
+  hotspot.style.display = "none"
 
-  const arriveAndSummonHeart = () => {
+  if (currentFrame === targetFrame) {
+    onArrival()
+    return
+  }
+
+  stage.classList.add("dragging")
+  frame.classList.add("blurring")
+
+  const step = currentFrame < targetFrame ? 1 : -1
+
+  const move = () => {
+    currentFrame += step
+    updateFrame()
+
+    if (currentFrame !== targetFrame) {
+      setTimeout(move, 150)
+    } else {
+      stage.classList.remove("dragging")
+      frame.classList.remove("blurring")
+      onArrival()
+    }
+  }
+
+  setTimeout(move, 120)
+}
+
+function moveToFrame15ThenPlayHeart(){
+  moveToFrame(15, () => {
     setTimeout(() => {
       heartAudio.currentTime = 0
       heartAudio.play().catch(() => {})
@@ -913,40 +940,9 @@ function moveToFrame15ThenPlayHeart(){
       setTimeout(() => {
         playing = false
         playHeart(false)
-      }, PREROLL_MS)
-
-    }, ARRIVAL_HOLD_MS)
-  }
-
-  if (currentFrame === 15) {
-    playing = true
-    hotspot.style.display = "none"
-    arriveAndSummonHeart()
-    return
-  }
-
-  playing = true
-  hotspot.style.display = "none"
-
-  stage.classList.add("dragging")
-  frame.classList.add("blurring")
-
-  const step = currentFrame < 15 ? 1 : -1
-
-  const moveTo15 = () => {
-    currentFrame += step
-    updateFrame()
-
-    if (currentFrame !== 15) {
-      setTimeout(moveTo15, 150)
-    } else {
-      stage.classList.remove("dragging")
-      frame.classList.remove("blurring")
-      arriveAndSummonHeart()
-    }
-  }
-
-  setTimeout(moveTo15, 120)
+      }, 420)
+    }, 700)
+  })
 }
 
 /* ---------- BUZZING ---------- */
@@ -954,7 +950,7 @@ function moveToFrame15ThenPlayHeart(){
 function playBuzzing(){
   if (playing) return
 
-      stopAllAmbientSounds()
+  stopAllAmbientSounds()
 
   playing = true
   buzzingActive = true
@@ -1006,46 +1002,12 @@ function closeBuzzing(){
 }
 
 function moveToFrame4ThenPlayBuzzing(){
-  if (playing) return
-
-  const ARRIVAL_HOLD_MS = 260
-
-  const arriveAndSummonBuzzing = () => {
+  moveToFrame(4, () => {
     setTimeout(() => {
       playing = false
       playBuzzing()
-    }, ARRIVAL_HOLD_MS)
-  }
-
-  if (currentFrame === 4) {
-    playing = true
-    hotspot.style.display = "none"
-    arriveAndSummonBuzzing()
-    return
-  }
-
-  playing = true
-  hotspot.style.display = "none"
-
-  stage.classList.add("dragging")
-  frame.classList.add("blurring")
-
-  const step = currentFrame < 4 ? 1 : -1
-
-  const moveTo4 = () => {
-    currentFrame += step
-    updateFrame()
-
-    if (currentFrame !== 4) {
-      setTimeout(moveTo4, 150)
-    } else {
-      stage.classList.remove("dragging")
-      frame.classList.remove("blurring")
-      arriveAndSummonBuzzing()
-    }
-  }
-
-  setTimeout(moveTo4, 120)
+    }, 260)
+  })
 }
 
 
@@ -1061,22 +1023,22 @@ function playMK(){
 
   const src = nextMK === 1 ? "media/mk01.mp4" : "media/mk02.mp4"
 
-videoMK.src = src
-videoMK.currentTime = 0
-videoMK.style.display = "block"
-videoMK.style.opacity = "0"
+  videoMK.src = src
+  videoMK.currentTime = 0
+  videoMK.style.display = "block"
+  videoMK.style.opacity = "0"
 
-const startMK = () => {
-  requestAnimationFrame(() => {
-    videoMK.style.opacity = "1"
-  })
+  const startMK = () => {
+    requestAnimationFrame(() => {
+      videoMK.style.opacity = "1"
+    })
 
-  videoMK.play()
-  videoMK.removeEventListener("canplay", startMK)
-}
+    videoMK.play()
+    videoMK.removeEventListener("canplay", startMK)
+  }
 
-videoMK.addEventListener("canplay", startMK)
-videoMK.load()
+  videoMK.addEventListener("canplay", startMK)
+  videoMK.load()
 
   videoMK.onended = () => {
     closeMK(true)
@@ -1084,38 +1046,12 @@ videoMK.load()
 }
 
 function moveToFrame21ThenPlayMK(){
-
-  if (playing) return
-
-  playing = true
-  hotspot.style.display = "none"
-
-  stage.classList.add("dragging")
-  frame.classList.add("blurring")
-
-  const step = currentFrame < 21 ? 1 : -1
-
-  const move = () => {
-
-    currentFrame += step
-    updateFrame()
-
-    if (currentFrame !== 21) {
-      setTimeout(move, 150)
-    } else {
-
-      stage.classList.remove("dragging")
-      frame.classList.remove("blurring")
-
-playMK()
-
-setTimeout(() => {
-  playing = false
-}, 180)
-    }
-  }
-
-  setTimeout(move,120)
+  moveToFrame(21, () => {
+    setTimeout(() => {
+      playing = false
+      playMK()
+    }, 250)
+  })
 }
 
 
@@ -1142,9 +1078,10 @@ hotspot.addEventListener("click", e => {
 
   if (maps.buzzing[currentFrame]) {
     moveToFrame4ThenPlayBuzzing()
+    return
   }
 
-if (maps.mikeKelley[currentFrame]) {
+  if (maps.mikeKelley[currentFrame]) {
   if (!mkArmed) return
   moveToFrame21ThenPlayMK()
   return
