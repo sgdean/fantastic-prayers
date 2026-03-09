@@ -175,6 +175,17 @@ body{
   z-index:4;
 }
 
+#hotspot2{
+  position:absolute;
+  left:210px;
+  top:85px;
+  width:430px;
+  height:200px;
+  display:none;
+  cursor:pointer;
+  z-index:4;
+}
+
 #mapperBox{
   position:absolute;
   left:200px;
@@ -225,6 +236,7 @@ body{
     <div id="stage">
       <img id="frame" src="frames/frame10.png" draggable="false">
       <div id="hotspot"></div>
+      <div id="hotspot2"></div>
       <video id="videoFull" playsinline preload="auto"></video>
       <video id="videoWindow" playsinline preload="auto"></video>
       <video id="videoHeart" playsinline preload="auto"></video>
@@ -272,6 +284,7 @@ let buzzingActive = false
 
 const frame = document.getElementById("frame")
 const hotspot = document.getElementById("hotspot")
+const hotspot2 = document.getElementById("hotspot2")
 const videoFull = document.getElementById("videoFull")
 const videoWindow = document.getElementById("videoWindow")
 const videoHeart = document.getElementById("videoHeart")
@@ -707,12 +720,16 @@ function drawMapperBox(){
 function updateFrame(){
   frame.src = "frames/frame" + currentFrame + ".png"
 
+  hotspot.style.display = "none"
+  hotspot2.style.display = "none"
+
   if (!playing && currentFrame === 10) {
     hotspot.style.display = "block"
     hotspot.style.left = "210px"
     hotspot.style.top = "85px"
     hotspot.style.width = "430px"
     hotspot.style.height = "200px"
+
   } else if (!playing && maps.heart[currentFrame]) {
     const r = maps.heart[currentFrame]
     hotspot.style.display = "block"
@@ -720,72 +737,80 @@ function updateFrame(){
     hotspot.style.top = r.y + "px"
     hotspot.style.width = r.w + "px"
     hotspot.style.height = r.h + "px"
-  } else if (maps.nakedGuy[currentFrame] && !nakedActive && nakedArmed) {
-    const r = maps.nakedGuy[currentFrame]
-    hotspot.style.display = "block"
-    hotspot.style.left = r.x + "px"
-    hotspot.style.top = r.y + "px"
-    hotspot.style.width = r.w + "px"
-    hotspot.style.height = r.h + "px"
-  } else if (!playing && maps.buzzing[currentFrame]) {
-    const r = maps.buzzing[currentFrame]
-    hotspot.style.display = "block"
-    hotspot.style.left = r.x + "px"
-    hotspot.style.top = r.y + "px"
-    hotspot.style.width = r.w + "px"
-    hotspot.style.height = r.h + "px"
-  } else if (!playing && maps.mikeKelley[currentFrame] && mkArmed) {
-    const r = maps.mikeKelley[currentFrame]
-    hotspot.style.display = "block"
-    hotspot.style.left = r.x + "px"
-    hotspot.style.top = r.y + "px"
-    hotspot.style.width = r.w + "px"
-    hotspot.style.height = r.h + "px"
+
   } else {
-    hotspot.style.display = "none"
+    if (!playing && maps.buzzing[currentFrame]) {
+      const r = maps.buzzing[currentFrame]
+      hotspot.style.display = "block"
+      hotspot.style.left = r.x + "px"
+      hotspot.style.top = r.y + "px"
+      hotspot.style.width = r.w + "px"
+      hotspot.style.height = r.h + "px"
+    }
+
+    if (maps.nakedGuy[currentFrame] && !nakedActive && nakedArmed) {
+      const r = maps.nakedGuy[currentFrame]
+      hotspot2.style.display = "block"
+      hotspot2.style.left = r.x + "px"
+      hotspot2.style.top = r.y + "px"
+      hotspot2.style.width = r.w + "px"
+      hotspot2.style.height = r.h + "px"
+    }
+
+    if (!playing && maps.mikeKelley[currentFrame] && mkArmed) {
+      const r = maps.mikeKelley[currentFrame]
+      if (hotspot.style.display === "none") {
+        hotspot.style.display = "block"
+        hotspot.style.left = r.x + "px"
+        hotspot.style.top = r.y + "px"
+        hotspot.style.width = r.w + "px"
+        hotspot.style.height = r.h + "px"
+      } else {
+        hotspot2.style.display = "block"
+        hotspot2.style.left = r.x + "px"
+        hotspot2.style.top = r.y + "px"
+        hotspot2.style.width = r.w + "px"
+        hotspot2.style.height = r.h + "px"
+      }
+    }
   }
 
+  /* nakedGuy idle logic */
 
-/* nakedGuy idle logic */
+  if (!nakedActive && !nakedLargePending && nakedLargePlayed && currentFrame === 3) {
 
-
-/* nakedGuy idle logic */
-
-if (!nakedActive && !nakedLargePending && nakedLargePlayed && currentFrame === 3) {
-
-  if (nakedSmallHideTimer) {
-    clearTimeout(nakedSmallHideTimer)
-    nakedSmallHideTimer = null
-  }
-
-  if (videoNakedSmall.style.display !== "block") {
-    playNakedGuySmall()
-  }
-
-} else {
-
-  if (videoNakedSmall.style.display === "block") {
-    stopNakedSmallReverse()
-    videoNakedSmall.style.opacity = "0"
-
-    if (nakedSmallHideTimer) clearTimeout(nakedSmallHideTimer)
-
-    nakedSmallHideTimer = setTimeout(() => {
-      videoNakedSmall.pause()
-      videoNakedSmall.currentTime = 0
-      videoNakedSmall.style.display = "none"
+    if (nakedSmallHideTimer) {
+      clearTimeout(nakedSmallHideTimer)
       nakedSmallHideTimer = null
-    }, 320)
-  }
+    }
 
-}
+    if (videoNakedSmall.style.display !== "block") {
+      playNakedGuySmall()
+    }
+
+  } else {
+
+    if (videoNakedSmall.style.display === "block") {
+      stopNakedSmallReverse()
+      videoNakedSmall.style.opacity = "0"
+
+      if (nakedSmallHideTimer) clearTimeout(nakedSmallHideTimer)
+
+      nakedSmallHideTimer = setTimeout(() => {
+        videoNakedSmall.pause()
+        videoNakedSmall.currentTime = 0
+        videoNakedSmall.style.display = "none"
+        nakedSmallHideTimer = null
+      }, 320)
+    }
+
+  }
 
   drawMapperBox()
 
   if (mouseInsideStage && lastMouseStageX !== null && lastMouseStageY !== null) {
     checkAmbientHotspots(lastMouseStageX, lastMouseStageY, "pointer")
   }
-
 }
 
 function nextFrame(){
@@ -1383,6 +1408,37 @@ hotspot.addEventListener("click", e => {
   moveToFrame21ThenPlayMK()
   return
 }
+})
+
+hotspot2.addEventListener("pointerdown", e => {
+  e.stopPropagation()
+})
+
+hotspot2.addEventListener("click", e => {
+  e.stopPropagation()
+
+  if (playing) return
+
+  if (maps.nakedGuy[currentFrame]) {
+    if (!nakedArmed) return
+
+    nakedLargePending = true
+
+    stopNakedSmallReverse()
+    videoNakedSmall.pause()
+    videoNakedSmall.currentTime = 0
+    videoNakedSmall.style.opacity = "0"
+    videoNakedSmall.style.display = "none"
+
+    moveToFrame3ThenPlayNakedGuy()
+    return
+  }
+
+  if (maps.mikeKelley[currentFrame]) {
+    if (!mkArmed) return
+    moveToFrame21ThenPlayMK()
+    return
+  }
 })
 
 /* ---------- HEART SCRUB ---------- */
