@@ -8,7 +8,7 @@
 <style>
 body{
   margin:0;
-  height:100vh;
+  min-height:100vh;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -20,6 +20,7 @@ body{
 
 .container{
   line-height:1.6;
+  padding:24px;
 }
 
 .title{
@@ -49,6 +50,22 @@ body{
 .enter:hover{
   opacity:.8;
 }
+
+.utility-link{
+  margin-top:56px;
+  font-size:12px;
+  opacity:.38;
+}
+
+.utility-link a{
+  color:inherit;
+  text-decoration:none;
+  cursor:pointer;
+}
+
+.utility-link a:hover{
+  opacity:.8;
+}
 </style>
 </head>
 
@@ -59,21 +76,42 @@ body{
   <div class="years">1998 / 2026</div>
   <div class="whisper">An excavation</div>
 
-  <div class="enter" onclick="enterSite()">Enter</div>
+  <div class="enter" onclick="enterWalls()">Enter</div>
+
+  <div class="utility-link">
+    <a href="#" onclick="enterCatalog(event)">Walls asset reference</a>
+  </div>
 </div>
 
 <script>
-  
-function enterSite(){
+function askPassword(){
+  return prompt("Enter password")
+}
 
-  const password = prompt("Enter password")
+function enterWalls(){
+  const password = askPassword()
+
+  if(password === null) return
 
   if(password === "kk"){
     window.location.href = "./walls/index.html"
   } else {
     alert("Incorrect password")
   }
+}
 
+function enterCatalog(event){
+  event.preventDefault()
+
+  const password = askPassword()
+
+  if(password === null) return
+
+  if(password === "kk"){
+    window.location.href = "./catalog/index.html"
+  } else {
+    alert("Incorrect password")
+  }
 }
 </script>
 

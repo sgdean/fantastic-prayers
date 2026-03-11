@@ -1,0 +1,65 @@
+[
+  {
+    "id": "walls-audio-001",
+    "title": "Whisper 1",
+    "filename": "whisper1.wav",
+    "path": "walls/audio/whisper1.wav",
+    "description": "Whisper voice",
+    "loop": false,
+    "notes": ""
+  },
+  {
+    "id": "walls-audio-002",
+    "title": "Whisper 2",
+    "filename": "whisper2.wav",
+    "path": "walls/audio/whisper2.wav",
+    "description": "Whisper voice",
+    "loop": false,
+    "notes": ""
+  },
+  {
+    "id": "walls-audio-003",
+    "title": "No, not that",
+    "filename": "no-not-that.wav",
+    "path": "walls/audio/no-not-that.wav",
+    "description": "Voice saying 'no, not that'",
+    "loop": false,
+    "notes": ""
+  },
+  {
+    "id": "walls-audio-004",
+    "title": "Drum",
+    "filename": "drum.wav",
+    "path": "walls/audio/drum.wav",
+    "description": "Drum ambient sound",
+    "loop": true,
+    "notes": ""
+  },
+  {
+    "id": "walls-audio-005",
+    "title": "Door creak",
+    "filename": "door-creak.wav",
+    "path": "walls/audio/door-creak.wav",
+    "description": "Door creaking sound",
+    "loop": true,
+    "notes": ""
+  },
+  {
+    "id": "walls-audio-006",
+    "title": "Listen",
+    "filename": "listen.wav",
+    "path": "walls/audio/listen.wav",
+    "description": "Voice cue saying 'listen'",
+    "loop": false,
+    "notes": ""
+  },
+  {
+    "id": "walls-audio-007",
+    "title": "Heart voice",
+    "filename": "heart.wav",
+    "path": "walls/audio/heart.wav",
+    "description": "Voice for heart interaction",
+    "loop": false,
+    "notes": ""
+  }
+]

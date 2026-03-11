@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fantastic Prayers — Walls Asset Reference</title>
+  <style>
+    :root {
+      --bg: #f7f6f2;
+      --panel: rgba(255, 255, 255, 0.72);
+      --text: #171717;
+      --muted: #6a6a6a;
+      --soft: #8b8b8b;
+      --line: rgba(0, 0, 0, 0.08);
+      --line-strong: rgba(0, 0, 0, 0.12);
+      --shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.04),
+        0 1px 2px rgba(0, 0, 0, 0.04),
+        0 8px 24px rgba(0, 0, 0, 0.03);
+      --radius: 18px;
+      --radius-sm: 12px;
+      --max: 920px;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.45;
+    }
+
+    main {
+      width: min(calc(100% - 32px), var(--max));
+      margin: 0 auto;
+      padding: 56px 0 72px;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-bottom: 28px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      letter-spacing: 0.01em;
+    }
+
+    .back-link:hover {
+      color: var(--text);
+    }
+
+    .intro {
+      margin-bottom: 44px;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      font-size: 13px;
+      color: var(--soft);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(30px, 4vw, 44px);
+      line-height: 1.04;
+      font-weight: 650;
+      letter-spacing: -0.03em;
+      text-wrap: balance;
+    }
+
+    .intro p {
+      margin: 0;
+      max-width: 680px;
+      color: var(--muted);
+      font-size: 16px;
+      text-wrap: pretty;
+    }
+
+    section {
+      margin-top: 42px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 620;
+      letter-spacing: -0.02em;
+    }
+
+    .section-count {
+      font-size: 13px;
+      color: var(--soft);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .asset-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .asset-card {
+      background: var(--panel);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 18px 16px;
+      backdrop-filter: blur(10px);
+    }
+
+    .asset-top {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 10px;
+    }
+
+    .asset-title-wrap {
+      min-width: 0;
+    }
+
+    .asset-title {
+      margin: 0 0 4px;
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .asset-filename {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      color: var(--soft);
+      word-break: break-word;
+    }
+
+    .asset-upload {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .asset-upload-label {
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #777;
+      margin-bottom: 10px;
+    }
+
+    .asset-upload-file-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .asset-upload-hidden-input {
+      display: none;
+    }
+
+    .asset-upload-file-button,
+    .asset-upload button {
+      border: 0;
+      background: #fff;
+      color: #444;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+      line-height: 1;
+      cursor: pointer;
+      box-shadow:
+        0 0 0 1px rgba(0,0,0,0.05),
+        0 1px 2px rgba(0,0,0,0.05);
+      transition: box-shadow 160ms ease, color 160ms ease, transform 160ms ease;
+    }
+
+    .asset-upload-file-button:hover,
+    .asset-upload button:hover {
+      color: var(--text);
+      transform: translateY(-1px);
+      box-shadow:
+        0 0 0 1px rgba(0,0,0,0.08),
+        0 2px 6px rgba(0,0,0,0.06);
+    }
+
+    .asset-upload-file-name {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .asset-upload input[type="text"] {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 13px;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(0,0,0,0.12);
+      background: rgba(255,255,255,0.85);
+      margin-bottom: 10px;
+      font-family: inherit;
+    }
+
+    .asset-upload-status {
+      font-size: 12px;
+      color: #777;
+      margin-top: 8px;
+    }
+
+    .copy-btn {
+      flex-shrink: 0;
+      border: 0;
+      background: white;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+      line-height: 1;
+      cursor: pointer;
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.05),
+        0 1px 2px rgba(0, 0, 0, 0.05);
+      transition: box-shadow 160ms ease, color 160ms ease, transform 160ms ease;
+    }
+
+    .copy-btn:hover {
+      color: var(--text);
+      transform: translateY(-1px);
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.08),
+        0 2px 6px rgba(0, 0, 0, 0.06);
+    }
+
+    .asset-description {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 14px;
+      text-wrap: pretty;
+    }
+
+    .asset-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 12px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04);
+    }
+
+    .asset-player audio {
+      width: 100%;
+      display: block;
+    }
+
+    .asset-player video {
+      max-width: 420px;
+      height: auto;
+      display: block;
+      border-radius: var(--radius-sm);
+      background: #000;
+      outline: 1px solid rgba(0, 0, 0, 0.08);
+      outline-offset: -1px;
+    }
+
+    .asset-player audio {
+      background: transparent;
+      outline: none;
+    }
+
+    .notes {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 13px;
+      color: var(--soft);
+    }
+
+    .empty,
+    .error {
+      color: var(--muted);
+      font-size: 15px;
+      padding: 10px 0;
+    }
+
+    .error {
+      color: #8a3b3b;
+    }
+
+    @media (max-width: 640px) {
+      main {
+        width: min(calc(100% - 24px), var(--max));
+        padding-top: 36px;
+      }
+
+      .asset-top {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .copy-btn {
+        align-self: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="back-link" href="../">← Back</a>
+
+    <div class="intro">
+      <p class="eyebrow">Fantastic Prayers</p>
+      <h1>Walls That Speak asset reference</h1>
+      <p>
+        This page lists the audio and video assets currently used in the Walls prototype.
+Filenames reflect the CD-ROM build and may differ from original source files.
+      </p>
+    </div>
+
+    <section>
+      <div class="section-head">
+        <h2>Audio</h2>
+        <div class="section-count" id="audio-count"></div>
+      </div>
+      <div id="audio-list" class="asset-list"></div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>Video</h2>
+        <div class="section-count" id="video-count"></div>
+      </div>
+      <div id="video-list" class="asset-list"></div>
+    </section>
+  </main>
+
+  <script>
+    const UPLOAD_ENDPOINT = "https://script.google.com/macros/s/AKfycbw52t_myEZIlUMs9_B9-dnbI7TBz2i8c_yL_5UlLm_XbtFkBnLXeB4EiIQZTcnT9Q2rKg/exec";
+
+    async function loadJSON(path) {
+      const response = await fetch(path);
+      if (!response.ok) {
+        throw new Error(`Could not load ${path}`);
+      }
+      return response.json();
+    }
+
+    function createCopyButton(filename) {
+      const button = document.createElement("button");
+      button.className = "copy-btn";
+      button.type = "button";
+      button.textContent = "Copy filename";
+
+      button.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(filename);
+          const previous = button.textContent;
+          button.textContent = "Copied";
+          setTimeout(() => {
+            button.textContent = previous;
+          }, 1200);
+        } catch (err) {
+          button.textContent = "Copy failed";
+          setTimeout(() => {
+            button.textContent = "Copy filename";
+          }, 1200);
+        }
+      });
+
+      return button;
+    }
+
+
+function createUploadUI(asset) {
+  const wrap = document.createElement("div");
+  wrap.className = "asset-upload";
+
+  const label = document.createElement("div");
+  label.className = "asset-upload-label";
+  label.textContent = "Upload matching source file";
+
+  const fileRow = document.createElement("div");
+  fileRow.className = "asset-upload-file-row";
+
+  const fileInput = document.createElement("input");
+  fileInput.type = "file";
+  fileInput.className = "asset-upload-hidden-input";
+  fileInput.id = `file-${asset.id}`;
+
+  const fileButton = document.createElement("label");
+  fileButton.className = "asset-upload-file-button";
+  fileButton.htmlFor = fileInput.id;
+  fileButton.textContent = "Choose file";
+
+  const fileName = document.createElement("div");
+  fileName.className = "asset-upload-file-name";
+  fileName.textContent = "No file chosen";
+
+  fileInput.addEventListener("change", () => {
+    fileName.textContent = fileInput.files[0]
+      ? fileInput.files[0].name
+      : "No file chosen";
+  });
+
+  const noteInput = document.createElement("input");
+  noteInput.type = "text";
+  noteInput.placeholder = "Optional note";
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = "Upload";
+
+  const status = document.createElement("div");
+  status.className = "asset-upload-status";
+
+  button.addEventListener("click", async () => {
+    const file = fileInput.files[0];
+
+    if (!file) {
+      status.textContent = "Choose a file first.";
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("assetName", asset.filename);
+    formData.append("note", noteInput.value || "");
+
+    button.disabled = true;
+    button.textContent = "Uploading...";
+    status.textContent = "";
+
+    try {
+      const response = await fetch(UPLOAD_ENDPOINT, {
+        method: "POST",
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (result.ok) {
+        button.textContent = "Uploaded";
+        status.textContent = "Upload complete.";
+        fileInput.value = "";
+        fileName.textContent = "No file chosen";
+        noteInput.value = "";
+      } else {
+        button.disabled = false;
+        button.textContent = "Upload";
+        status.textContent = result.error || "Upload failed.";
+      }
+    } catch (error) {
+      button.disabled = false;
+      button.textContent = "Upload";
+      status.textContent = "Upload error.";
+      console.error("Upload error:", error);
+    }
+  });
+
+  fileRow.appendChild(fileButton);
+  fileRow.appendChild(fileName);
+
+  wrap.appendChild(label);
+  wrap.appendChild(fileInput);
+  wrap.appendChild(fileRow);
+  wrap.appendChild(noteInput);
+  wrap.appendChild(button);
+  wrap.appendChild(status);
+
+  return wrap;
+}
+
+function renderAudioCard(asset) {
+  const card = document.createElement("article");
+  card.className = "asset-card";
+
+  const top = document.createElement("div");
+  top.className = "asset-top";
+
+  const titleWrap = document.createElement("div");
+  titleWrap.className = "asset-title-wrap";
+
+  const title = document.createElement("h3");
+  title.className = "asset-title";
+  title.textContent = asset.title;
+
+  const filename = document.createElement("div");
+  filename.className = "asset-filename";
+  filename.textContent = asset.filename;
+
+  titleWrap.appendChild(title);
+  titleWrap.appendChild(filename);
+  top.appendChild(titleWrap);
+  top.appendChild(createCopyButton(asset.filename));
+
+  const description = document.createElement("p");
+  description.className = "asset-description";
+  description.textContent = asset.description || "";
+
+  const meta = document.createElement("div");
+  meta.className = "asset-meta";
+
+  const loopPill = document.createElement("div");
+  loopPill.className = "pill";
+  loopPill.textContent = asset.loop ? "Looped" : "Not looped";
+  meta.appendChild(loopPill);
+
+  const playerWrap = document.createElement("div");
+  playerWrap.className = "asset-player";
+
+  const audio = document.createElement("audio");
+  audio.controls = true;
+  audio.preload = "none";
+  audio.src = "../" + asset.path;
+  playerWrap.appendChild(audio);
+
+  card.appendChild(top);
+  card.appendChild(description);
+  card.appendChild(meta);
+  card.appendChild(playerWrap);
+  card.appendChild(createUploadUI(asset));
+
+  if (asset.notes && asset.notes.trim()) {
+    const notes = document.createElement("div");
+    notes.className = "notes";
+    notes.textContent = asset.notes;
+    card.appendChild(notes);
+  }
+
+  return card;
+}
+
+
+    function renderVideoCard(asset) {
+      const card = document.createElement("article");
+      card.className = "asset-card";
+
+      const top = document.createElement("div");
+      top.className = "asset-top";
+
+      const titleWrap = document.createElement("div");
+      titleWrap.className = "asset-title-wrap";
+
+      const title = document.createElement("h3");
+      title.className = "asset-title";
+      title.textContent = asset.title;
+
+      const filename = document.createElement("div");
+      filename.className = "asset-filename";
+      filename.textContent = asset.filename;
+
+      titleWrap.appendChild(title);
+      titleWrap.appendChild(filename);
+      top.appendChild(titleWrap);
+      top.appendChild(createCopyButton(asset.filename));
+
+      const description = document.createElement("p");
+      description.className = "asset-description";
+      description.textContent = asset.description || "";
+
+      const playerWrap = document.createElement("div");
+      playerWrap.className = "asset-player";
+
+      const video = document.createElement("video");
+      video.controls = true;
+      video.preload = "metadata";
+      video.src = "../" + asset.path;
+      playerWrap.appendChild(video);
+
+      card.appendChild(top);
+      card.appendChild(description);
+      card.appendChild(playerWrap);
+      card.appendChild(createUploadUI(asset));
+
+      if (asset.notes && asset.notes.trim()) {
+        const notes = document.createElement("div");
+        notes.className = "notes";
+        notes.textContent = asset.notes;
+        card.appendChild(notes);
+      }
+
+      return card;
+    }
+
+    function renderList(containerId, countId, items, renderer) {
+      const container = document.getElementById(containerId);
+      const count = document.getElementById(countId);
+
+      container.innerHTML = "";
+      count.textContent = `${items.length} ${items.length === 1 ? "asset" : "assets"}`;
+
+      if (!items.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = "No assets yet.";
+        container.appendChild(empty);
+        return;
+      }
+
+      items.forEach(item => {
+        container.appendChild(renderer(item));
+      });
+    }
+
+    function showError(containerId, countId, message) {
+      const container = document.getElementById(containerId);
+      const count = document.getElementById(countId);
+      count.textContent = "";
+      container.innerHTML = `<div class="error">${message}</div>`;
+    }
+
+    async function init() {
+      try {
+        const audioAssets = await loadJSON("../data/walls-audio.json");
+        renderList("audio-list", "audio-count", audioAssets, renderAudioCard);
+      } catch (error) {
+        showError("audio-list", "audio-count", "Could not load audio assets.");
+        console.error("Audio load error:", error);
+      }
+
+      try {
+        const videoAssets = await loadJSON("../data/walls-video.json");
+        renderList("video-list", "video-count", videoAssets, renderVideoCard);
+      } catch (error) {
+        showError("video-list", "video-count", "Could not load video assets.");
+        console.error("Video load error:", error);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
