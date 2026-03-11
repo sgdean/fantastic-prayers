@@ -1,1 +1,15 @@
+# macOS
 .DS_Store
+
+# Python server artifacts
+__pycache__/
+
+# editor junk
+*.swp
+*.swo
+
+# system files
+Thumbs.db
+
+# temporary exports
+*.tmp
