@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Suburbia Prototype</title>
+  <style>
+    :root {
+      --debug-bg: rgba(0, 0, 0, 0.78);
+      --debug-fg: #d8ffd8;
+      --debug-accent: #8fe88f;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      cursor: none;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    #app {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #000;
+    }
+
+    #bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
+    }
+
+    #valleyCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    #joe {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 80px;
+      height: 100px;
+      object-fit: cover;
+      transform: translate(-50%, -50%) scale(1);
+      transform-origin: center center;
+      pointer-events: none;
+      z-index: 30;
+      opacity: 1;
+      transition: opacity 160ms linear;
+      will-change: transform, opacity;
+      background: transparent;
+    }
+
+    #debug {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 100;
+      min-width: 260px;
+      padding: 10px 12px;
+      background: var(--debug-bg);
+      color: var(--debug-fg);
+      border: 1px solid rgba(143, 232, 143, 0.45);
+      border-radius: 8px;
+      font: 12px/1.35 Menlo, Monaco, Consolas, monospace;
+      white-space: pre-wrap;
+      pointer-events: none;
+    }
+
+    #startOverlay,
+    #messageOverlay {
+      position: absolute;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(0, 0, 0, 0.72);
+      color: #fff;
+      text-align: center;
+    }
+
+    #startPanel,
+    #messagePanel {
+      max-width: 720px;
+      padding: 22px 24px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.76);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    #startPanel h1,
+    #messagePanel h2 {
+      margin: 0 0 10px;
+      font-size: 24px;
+      line-height: 1.1;
+      font-weight: 700;
+    }
+
+    #startPanel p,
+    #messagePanel p {
+      margin: 0 0 10px;
+      font-size: 15px;
+      line-height: 1.45;
+      color: rgba(255, 255, 255, 0.88);
+    }
+
+    #startButton {
+      margin-top: 12px;
+      padding: 12px 16px;
+      border: 0;
+      border-radius: 8px;
+      background: #fff;
+      color: #000;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <img id="bg" alt="" />
+    <canvas id="valleyCanvas"></canvas>
+
+    <video
+      id="joe"
+      src="./video/joe.mp4"
+      playsinline
+      loop
+      preload="auto"
+    ></video>
+
+    <div id="debug"></div>
+
+    <div id="startOverlay">
+      <div id="startPanel">
+        <h1>Suburbia prototype</h1>
+        <p>Click to enter Suburbia and start Joe. This first click is needed so the browser will allow video audio playback.</p>
+        <p><strong>D</strong> = debug overlay &nbsp;&nbsp; <strong>V</strong> = valley overlay &nbsp;&nbsp; <strong>X</strong> = force exit test</p>
+        <button id="startButton">Enter Suburbia</button>
+      </div>
+    </div>
+
+    <div id="messageOverlay" class="hidden">
+      <div id="messagePanel">
+        <h2>Shuttle complete</h2>
+        <p>Suburbia has returned to anchor frame 016.</p>
+        <p>This is where the <strong>Suburbia → Walls</strong> transition video will play next.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const CONFIG = {
+      frameCount: 20,
+      entryFrame: 16,
+      frameDurationMs: 680,
+      joeBaseWidth: 80,
+      joeBaseHeight: 100,
+      joeMaxScale: 1.0,
+      joeMinScale: 0.03,
+      exitThreshold: 0.04,
+
+      // Smooth procedural valleys. Normalized stage coords.
+      valleys: [
+        { x: 0.28, y: 0.58, radius: 0.24, depth: 1.05 },
+        { x: 0.76, y: 0.30, radius: 0.26, depth: 1.10 }
+      ],
+
+      debug: {
+        overlay: false,
+        valleys: false
+      }
+    };
+
+    const state = {
+      mode: "boot", // boot | drift | shuttle | complete
+      currentFrame: CONFIG.entryFrame,
+      mouseX: window.innerWidth * 0.5,
+      mouseY: window.innerHeight * 0.5,
+      joeScale: 1,
+      topoValue: 0,
+      shuttleTarget: CONFIG.entryFrame,
+      frameTimerId: null,
+      hasStarted: false
+    };
+
+    const els = {
+      app: document.getElementById("app"),
+      bg: document.getElementById("bg"),
+      joe: document.getElementById("joe"),
+      debug: document.getElementById("debug"),
+      valleyCanvas: document.getElementById("valleyCanvas"),
+      startOverlay: document.getElementById("startOverlay"),
+      startButton: document.getElementById("startButton"),
+      messageOverlay: document.getElementById("messageOverlay")
+    };
+
+    const ctx = els.valleyCanvas.getContext("2d");
+    const loadedImages = new Map();
+
+    function frameToFilename(frameNum) {
+      return `./images/suburbia_${String(frameNum).padStart(3, "0")}.png`;
+    }
+
+    function nextFrame(frameNum) {
+      return frameNum >= CONFIG.frameCount ? 1 : frameNum + 1;
+    }
+
+    async function preloadImages() {
+      const promises = [];
+      for (let i = 1; i <= CONFIG.frameCount; i++) {
+        const src = frameToFilename(i);
+        promises.push(new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => {
+            loadedImages.set(i, img);
+            resolve();
+          };
+          img.onerror = reject;
+          img.src = src;
+        }));
+      }
+      return Promise.all(promises);
+    }
+
+    function renderFrame(frameNum) {
+      state.currentFrame = frameNum;
+      const img = loadedImages.get(frameNum);
+      if (!img) return;
+      els.bg.src = img.src;
+    }
+
+    function resizeCanvas() {
+      els.valleyCanvas.width = window.innerWidth;
+      els.valleyCanvas.height = window.innerHeight;
+      drawValleyOverlay();
+      updateJoe();
+      updateDebug();
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    function smoothstep(edge0, edge1, x) {
+      const t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
+      return t * t * (3 - 2 * t);
+    }
+
+    function getNormalizedMouse() {
+      const rect = els.app.getBoundingClientRect();
+      return {
+        x: clamp((state.mouseX - rect.left) / rect.width, 0, 1),
+        y: clamp((state.mouseY - rect.top) / rect.height, 0, 1)
+      };
+    }
+
+    function computeTopographyAt(nx, ny) {
+      let total = 0;
+
+      for (const valley of CONFIG.valleys) {
+        const dx = nx - valley.x;
+        const dy = ny - valley.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        // Gaussian-ish falloff for smooth valley blending.
+        const influence = Math.exp(-((dist * dist) / (2 * valley.radius * valley.radius)));
+        total += influence * valley.depth;
+      }
+
+      // Normalize and slightly shape the curve.
+      const normalized = clamp(total / 1.45, 0, 1);
+      const shaped = Math.pow(normalized, 0.9);
+
+      return shaped;
+    }
+
+    function computeJoeScale(topoValue) {
+      const delayed = smoothstep(0.35, 1, topoValue);
+      return lerp(CONFIG.joeMaxScale, CONFIG.joeMinScale, delayed);
+    }
+
+    function positionJoe() {
+      const descent = state.topoValue; // 0 = high ground, 1 = deep valley
+
+      const yOffset = descent * 28;         // sinks downward as he descends
+      const opacity = 1 - descent * 0.28;   // fades a little as he descends
+      const blur = descent * 1.2;           // softens as he descends
+      const volume = 1 - descent * 0.65;    // gets quieter as he descends
+
+      els.joe.style.left = `${state.mouseX}px`;
+      els.joe.style.top = `${state.mouseY + yOffset}px`;
+      els.joe.style.opacity = `${opacity}`;
+      els.joe.style.filter = `blur(${blur}px)`;
+      els.joe.style.transform = `translate(-50%, -50%) scale(${state.joeScale})`;
+
+      els.joe.volume = Math.max(0.2, volume);
+    }
+    
+    function updateJoe() {
+      const { x, y } = getNormalizedMouse();
+      state.topoValue = computeTopographyAt(x, y);
+      state.joeScale = computeJoeScale(state.topoValue);
+      positionJoe();
+
+      if (state.mode === "drift" && state.joeScale <= CONFIG.exitThreshold) {
+        beginExit();
+      }
+    }
+
+    function drawValleyOverlay() {
+      ctx.clearRect(0, 0, els.valleyCanvas.width, els.valleyCanvas.height);
+
+      if (!CONFIG.debug.valleys) return;
+
+      const w = els.valleyCanvas.width;
+      const h = els.valleyCanvas.height;
+
+      for (const valley of CONFIG.valleys) {
+        const x = valley.x * w;
+        const y = valley.y * h;
+        const r = valley.radius * Math.min(w, h);
+
+        // Valley area
+        const gradient = ctx.createRadialGradient(x, y, 0, x, y, r);
+        gradient.addColorStop(0, "rgba(120, 255, 120, 0.28)");
+        gradient.addColorStop(0.5, "rgba(120, 255, 120, 0.12)");
+        gradient.addColorStop(1, "rgba(120, 255, 120, 0.02)");
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Center point
+        ctx.strokeStyle = "rgba(160, 255, 160, 0.9)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Radius ring
+        ctx.strokeStyle = "rgba(160, 255, 160, 0.28)";
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    function updateDebug() {
+      els.debug.classList.toggle("hidden", !CONFIG.debug.overlay);
+
+      const belowThreshold = state.joeScale <= CONFIG.exitThreshold ? "yes" : "no";
+      const displayed = `suburbia_${String(state.currentFrame).padStart(3, "0")}.png`;
+
+      els.debug.textContent =
+`Environment: Suburbia
+Mode: ${state.mode}
+Current frame: ${String(state.currentFrame).padStart(3, "0")}
+Displayed image: ${displayed}
+Anchor frame: ${String(CONFIG.entryFrame).padStart(3, "0")}
+Mouse X: ${Math.round(state.mouseX)}
+Mouse Y: ${Math.round(state.mouseY)}
+Topography value: ${state.topoValue.toFixed(3)}
+Joe scale: ${state.joeScale.toFixed(3)}
+Exit threshold: ${CONFIG.exitThreshold.toFixed(3)}
+Below threshold: ${belowThreshold}
+Drift speed: ${CONFIG.frameDurationMs} ms/frame
+Valley overlay: ${CONFIG.debug.valleys ? "on" : "off"}
+Debug overlay: ${CONFIG.debug.overlay ? "on" : "off"}`;
+    }
+
+    function startDriftTimer() {
+      stopDriftTimer();
+      state.frameTimerId = window.setInterval(() => {
+        if (state.mode === "drift") {
+          renderFrame(nextFrame(state.currentFrame));
+        } else if (state.mode === "shuttle") {
+          if (state.currentFrame === CONFIG.entryFrame) {
+            completeExit();
+          } else {
+            renderFrame(nextFrame(state.currentFrame));
+          }
+        }
+
+        updateDebug();
+      }, CONFIG.frameDurationMs);
+    }
+
+    function stopDriftTimer() {
+      if (state.frameTimerId) {
+        window.clearInterval(state.frameTimerId);
+        state.frameTimerId = null;
+      }
+    }
+
+    function beginExit() {
+      if (state.mode !== "drift") return;
+
+      state.mode = "shuttle";
+      els.joe.style.opacity = "0";
+      try {
+        els.joe.pause();
+        els.joe.currentTime = 0;
+      } catch (err) {
+        console.warn("Could not pause Joe video:", err);
+      }
+
+      updateDebug();
+    }
+
+    function completeExit() {
+      state.mode = "complete";
+      stopDriftTimer();
+      els.messageOverlay.classList.remove("hidden");
+      updateDebug();
+    }
+
+    function handlePointerMove(event) {
+      state.mouseX = event.clientX;
+      state.mouseY = event.clientY;
+      updateJoe();
+      updateDebug();
+    }
+
+    async function startExperience() {
+      if (state.hasStarted) return;
+      state.hasStarted = true;
+
+      els.startOverlay.classList.add("hidden");
+      renderFrame(CONFIG.entryFrame);
+
+      try {
+        els.joe.muted = false;
+        await els.joe.play();
+      } catch (err) {
+        console.warn("Joe video/audio could not autoplay after click:", err);
+      }
+
+      state.mode = "drift";
+      updateJoe();
+      updateDebug();
+      startDriftTimer();
+    }
+
+    function handleKeydown(event) {
+      const key = event.key.toLowerCase();
+
+      if (key === "d") {
+        CONFIG.debug.overlay = !CONFIG.debug.overlay;
+        updateDebug();
+      }
+
+      if (key === "v") {
+        CONFIG.debug.valleys = !CONFIG.debug.valleys;
+        drawValleyOverlay();
+        updateDebug();
+      }
+
+      if (key === "x") {
+        if (state.mode === "drift") beginExit();
+      }
+    }
+
+    async function init() {
+      renderFrame(CONFIG.entryFrame);
+      resizeCanvas();
+      updateJoe();
+      updateDebug();
+
+      await preloadImages();
+      renderFrame(CONFIG.entryFrame);
+
+      window.addEventListener("resize", resizeCanvas);
+      window.addEventListener("mousemove", handlePointerMove);
+      window.addEventListener("keydown", handleKeydown);
+      els.startButton.addEventListener("click", startExperience);
+      els.startOverlay.addEventListener("click", startExperience);
+    }
+
+    init().catch(err => {
+      console.error("Suburbia failed to initialize:", err);
+      alert("Suburbia failed to initialize. Check the console and confirm all image/video paths are correct.");
+    });
+  </script>
+</body>
+</html>
