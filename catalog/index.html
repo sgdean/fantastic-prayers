@@ -399,7 +399,7 @@ Filenames reflect the CD-ROM build and may differ from original source files.
     }
 
 
-function createUploadUI(asset) {
+function createUploadUI(asset, mediaType) {
   const wrap = document.createElement("div");
   wrap.className = "asset-upload";
 
@@ -412,6 +412,7 @@ function createUploadUI(asset) {
 
   const fileInput = document.createElement("input");
   fileInput.type = "file";
+  fileInput.accept = mediaType === "audio" ? "audio/*" : "video/*";
   fileInput.className = "asset-upload-hidden-input";
   fileInput.id = `file-${asset.id}`;
 
@@ -546,7 +547,7 @@ function renderAudioCard(asset) {
   card.appendChild(description);
   card.appendChild(meta);
   card.appendChild(playerWrap);
-  card.appendChild(createUploadUI(asset));
+  card.appendChild(createUploadUI(asset, "audio"));
 
   if (asset.notes && asset.notes.trim()) {
     const notes = document.createElement("div");
@@ -598,7 +599,7 @@ function renderAudioCard(asset) {
       card.appendChild(top);
       card.appendChild(description);
       card.appendChild(playerWrap);
-      card.appendChild(createUploadUI(asset));
+      card.appendChild(createUploadUI(asset, "video"));
 
       if (asset.notes && asset.notes.trim()) {
         const notes = document.createElement("div");

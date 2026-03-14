@@ -61,5 +61,13 @@
     "description": "Voice for heart interaction",
     "loop": false,
     "notes": ""
+  },
+  {
+    "id": "suburbia-loop",
+    "title": "Suburbia ambient sound",
+    "filename": "suburbia.wav",
+    "path": "transitions/suburbia.wav",
+    "description": "Ambient audio used during transition into and out of Suburbia.",
+    "loop": false
   }
 ]

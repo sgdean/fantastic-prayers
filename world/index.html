@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=no" />
+  <title>Fantastic Prayers — World</title>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
+
+    body {
+      position: fixed;
+      inset: 0;
+      overscroll-behavior: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    #viewport {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    #stageWrap {
+      position: relative;
+      width: 640px;
+      height: 480px;
+      transform-origin: center center;
+      will-change: transform;
+    }
+
+    #stage {
+      position: relative;
+      width: 640px;
+      height: 480px;
+      overflow: hidden;
+      background: #000;
+      box-shadow: 0 0 40px #000 inset;
+    }
+
+    #envFrame {
+      position: absolute;
+      inset: 0;
+      width: 640px;
+      height: 480px;
+      border: 0;
+      display: block;
+      background: #000;
+    }
+
+    #transitionVideo {
+      position: absolute;
+      inset: 0;
+      width: 640px;
+      height: 480px;
+      display: none;
+      z-index: 100;
+      object-fit: fill;
+      pointer-events: none;
+      background: #000;
+    }
+
+    #debug {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 9999;
+      min-width: 260px;
+      padding: 10px 12px;
+      background: rgba(0,0,0,0.78);
+      color: #d8ffd8;
+      border: 1px solid rgba(143, 232, 143, 0.45);
+      border-radius: 8px;
+      font: 12px/1.35 Menlo, Monaco, Consolas, monospace;
+      white-space: pre-wrap;
+      pointer-events: none;
+      display: none;
+    }
+
+    #testControls {
+      position: fixed;
+      right: 12px;
+      top: 12px;
+      z-index: 9999;
+      display: none;
+      gap: 8px;
+    }
+
+    #testControls button {
+      padding: 8px 10px;
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 6px;
+      background: rgba(0,0,0,0.75);
+      color: #fff;
+      font: 12px/1 Arial, sans-serif;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="viewport">
+    <div id="stageWrap">
+      <div id="stage">
+        <iframe
+          id="envFrame"
+          src="../walls/index.html"
+          allow="autoplay; fullscreen"
+        ></iframe>
+
+        <video
+          id="transitionVideo"
+          playsinline
+          preload="auto"
+        ></video>
+
+        <audio
+          id="transitionAudio"
+          preload="auto"
+        ></audio>
+
+      </div>
+    </div>
+  </div>
+
+  <div id="debug"></div>
+
+  <div id="testControls">
+    <button id="btnWalls">Walls</button>
+    <button id="btnSuburbia">Suburbia</button>
+  </div>
+
+  <script>
+    const STAGE_W = 640;
+    const STAGE_H = 480;
+
+    const ENV_PATHS = {
+      walls: "../walls/index.html",
+      suburbia: "../suburbia/index.html"
+    };
+
+    const ENTRY_PARAMS = {
+      walls: {},
+      suburbia: {},
+      "suburbia:walls": { frame: 22 }
+    };
+
+  let envLoadCounter = 0;
+
+  function envUrl(envName, params = {}) {
+    const base = ENV_PATHS[envName];
+
+    if (!base) {
+      throw new Error(`Unknown environment: ${envName}`);
+    }
+
+    const url = new URL(base, window.location.href);
+
+    envLoadCounter += 1;
+    url.searchParams.set("load", envLoadCounter);
+
+    Object.entries(params).forEach(([key, value]) => {
+      url.searchParams.set(key, value);
+    });
+
+    return url.toString();
+  }
+
+
+    const TRANSITIONS = {
+      "walls:suburbia": "../transitions/walls-to-suburbia.mp4",
+      "suburbia:walls": "../transitions/suburbia-to-walls.mp4"
+    };
+
+    const TRANSITION_AUDIO = {
+      "walls:suburbia": "../transitions/suburbia.wav",
+      "suburbia:walls": "../transitions/suburbia.wav"
+    };
+
+    const state = {
+      currentEnv: "walls",
+      pendingEnv: null,
+      transitioning: false,
+      debug: false
+    };
+
+    const els = {
+      stageWrap: document.getElementById("stageWrap"),
+      envFrame: document.getElementById("envFrame"),
+      transitionVideo: document.getElementById("transitionVideo"),
+      transitionAudio: document.getElementById("transitionAudio"),
+      debug: document.getElementById("debug"),
+      btnWalls: document.getElementById("btnWalls"),
+      btnSuburbia: document.getElementById("btnSuburbia")
+    };
+
+    function fitStage() {
+      const scale = Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H);
+      els.stageWrap.style.transform = `scale(${scale})`;
+      updateDebug();
+    }
+
+    function updateDebug() {
+      if (!state.debug) {
+        els.debug.style.display = "none";
+        return;
+      }
+
+      els.debug.style.display = "block";
+      els.debug.textContent =
+`World shell
+Current env: ${state.currentEnv}
+Pending env: ${state.pendingEnv || "-"}
+Transitioning: ${state.transitioning ? "yes" : "no"}
+Iframe src: ${els.envFrame.getAttribute("src")}`;
+    }
+
+    async function swapEnvironmentSilently(envName, params = {}) {
+      return new Promise((resolve, reject) => {
+        if (!ENV_PATHS[envName]) {
+          reject(new Error(`Unknown environment: ${envName}`));
+          return;
+        }
+
+        const timeoutId = window.setTimeout(() => {
+          reject(new Error(`Timed out loading environment: ${envName}`));
+        }, 10000);
+
+        const handleLoad = () => {
+          clearTimeout(timeoutId);
+          state.currentEnv = envName;
+          updateDebug();
+          resolve();
+        };
+
+        els.envFrame.addEventListener("load", handleLoad, { once: true });
+        els.envFrame.src = envUrl(envName, params);
+      });
+    }
+
+   async function playTransition(fromEnv, toEnv) {
+  const key = `${fromEnv}:${toEnv}`;
+  const src = TRANSITIONS[key];
+  const audioSrc = TRANSITION_AUDIO[key];
+
+  if (state.transitioning) return;
+
+  if (fromEnv === toEnv) {
+    await swapEnvironmentSilently(toEnv);
+    return;
+  }
+
+  if (!src) {
+    console.warn("No transition registered for", key, "— swapping directly.");
+    await swapEnvironmentSilently(toEnv);
+    return;
+  }
+
+  state.transitioning = true;
+  state.pendingEnv = toEnv;
+  updateDebug();
+
+  const video = els.transitionVideo;
+  const audio = els.transitionAudio;
+
+  video.style.display = "block";
+  video.src = src;
+  video.currentTime = 0;
+
+  if (audioSrc) {
+    audio.src = audioSrc;
+    audio.currentTime = 0;
+  }
+
+  const transitionKey = `${fromEnv}:${toEnv}`;
+  const targetParams = ENTRY_PARAMS[transitionKey] || ENTRY_PARAMS[toEnv] || {};
+
+  const loadPromise = swapEnvironmentSilently(toEnv, targetParams);
+
+  try {
+    if (audioSrc) await audio.play();
+    await video.play();
+
+    await Promise.all([
+      loadPromise,
+      new Promise(resolve => {
+        video.onended = () => resolve();
+      })
+    ]);
+  } catch (err) {
+    console.error("Transition failed:", err);
+  } finally {
+    video.pause();
+    video.currentTime = 0;
+    video.style.display = "none";
+    video.onended = null;
+
+    audio.pause();
+    audio.currentTime = 0;
+
+    if (toEnv === "suburbia" && els.envFrame.contentWindow) {
+      els.envFrame.contentWindow.postMessage(
+        { type: "suburbia-start" },
+        window.location.origin
+      );
+    }
+
+    state.transitioning = false;
+    state.pendingEnv = null;
+    updateDebug();
+  }
+}
+
+    window.addEventListener("message", async (event) => {
+      const data = event.data;
+      if (!data || typeof data !== "object") return;
+
+      if (data.type === "goto-suburbia") {
+        await playTransition("walls", "suburbia");
+      }
+
+      if (data.type === "goto-walls") {
+        await playTransition("suburbia", "walls");
+      }
+
+      if (data.type === "world-debug") {
+        state.debug = !state.debug;
+        updateDebug();
+      }
+    });
+
+    window.addEventListener("resize", fitStage);
+
+    document.addEventListener("keydown", (e) => {
+      const key = e.key.toLowerCase();
+
+      if (key === "d") {
+        state.debug = !state.debug;
+        updateDebug();
+      }
+
+      // temporary manual testing shortcuts
+      if (key === "1" && !state.transitioning) {
+        playTransition(state.currentEnv, "walls");
+      }
+
+      if (key === "2" && !state.transitioning) {
+        playTransition(state.currentEnv, "suburbia");
+      }
+    });
+
+    els.btnWalls.addEventListener("click", () => {
+      if (!state.transitioning) {
+        playTransition(state.currentEnv, "walls");
+      }
+    });
+
+    els.btnSuburbia.addEventListener("click", () => {
+      if (!state.transitioning) {
+        playTransition(state.currentEnv, "suburbia");
+      }
+    });
+
+    fitStage();
+    updateDebug();
+  </script>
+</body>
+</html>

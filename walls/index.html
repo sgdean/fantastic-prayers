@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=no">
@@ -164,26 +164,17 @@ body{
   cursor:default;
 }
 
-#hotspot{
+#hotspotLayer{
   position:absolute;
-  left:210px;
-  top:85px;
-  width:430px;
-  height:200px;
-  display:none;
-  cursor:pointer;
+  inset:0;
   z-index:4;
+  pointer-events:none;
 }
 
-#hotspot2{
+.hotspot{
   position:absolute;
-  left:210px;
-  top:85px;
-  width:430px;
-  height:200px;
-  display:none;
   cursor:pointer;
-  z-index:4;
+  pointer-events:auto;
 }
 
 #mapperBox{
@@ -235,8 +226,7 @@ body{
   <div id="stageWrap">
     <div id="stage">
       <img id="frame" src="frames/frame10.png" draggable="false">
-      <div id="hotspot"></div>
-      <div id="hotspot2"></div>
+      <div id="hotspotLayer"></div>
       <video id="videoFull" playsinline preload="auto"></video>
       <video id="videoWindow" playsinline preload="auto"></video>
       <video id="videoHeart" playsinline preload="auto"></video>
@@ -257,9 +247,20 @@ body{
 const STAGE_W = 640
 const STAGE_H = 480
 const totalFrames = 23
+const DEBUG_HOTSPOTS = false
 
 let stageMode = "fit" // "fit" or "fill"
-let currentFrame = Math.floor(Math.random() * totalFrames) + 1
+
+const params = new URLSearchParams(window.location.search)
+const requestedFrame = parseInt(params.get("frame"), 10)
+
+let currentFrame =
+  Number.isInteger(requestedFrame) &&
+  requestedFrame >= 1 &&
+  requestedFrame <= totalFrames
+    ? requestedFrame
+    : Math.floor(Math.random() * totalFrames) + 1
+    
 let playing = false
 let seqIndex = 0
 
@@ -284,8 +285,7 @@ let nakedSmallHideTimer = null
 let buzzingActive = false
 
 const frame = document.getElementById("frame")
-const hotspot = document.getElementById("hotspot")
-const hotspot2 = document.getElementById("hotspot2")
+const hotspotLayer = document.getElementById("hotspotLayer")
 const videoFull = document.getElementById("videoFull")
 const videoWindow = document.getElementById("videoWindow")
 const videoHeart = document.getElementById("videoHeart")
@@ -327,6 +327,10 @@ const maps = {
     8: { x: 40,  y: 115, w: 72, h: 62 }
   },
 
+  suckling: {
+  10: { x: 210, y: 85, w: 430, h: 200 }
+},
+
   drum: {
     17: { x: 481, y: 340, w: 56, h: 64 },
     18: { x: 387, y: 315, w: 44, h: 56 },
@@ -347,11 +351,9 @@ const maps = {
 
  doorCreak: {
   1: [
-    { x: 515, y: 85,  w: 44, h: 64 },
     { x: 515, y: 85,  w: 44, h: 64 }
   ],
   2: [
-    { x: 425, y: 85,  w: 40, h: 56 },
     { x: 425, y: 85,  w: 40, h: 56 }
   ],
   3: [
@@ -417,6 +419,15 @@ mikeKelley: {
   22: { x: 170, y: 35, w: 136, h: 36 },
   23: { x: 10,  y: 0,  w: 168, h: 56 }
 },
+suburbia: {
+  20: { x: 605, y: 165, w: 36, h: 192 },
+  21: { x: 537, y: 180, w: 76, h: 168 },
+  22: { x: 478, y: 185, w: 64, h: 136 },
+  23: { x: 350, y: 190, w: 56, h: 132 },
+  1:  { x: 210, y: 190, w: 52, h: 132 },
+  2:  { x: 125, y: 190, w: 44, h: 136 },
+  3:  { x: 13,  y: 185, w: 36, h: 144 }
+},
 nakedGuy: {
   1: { x: 465, y: 245, w: 60, h: 120 },
   2: { x: 375, y: 245, w: 64, h: 120 },
@@ -424,6 +435,134 @@ nakedGuy: {
   4: { x: 195, y: 238, w: 68, h: 120 },
   5: { x: 125, y: 255, w: 68, h: 120 }
 }
+}
+
+const interactiveHotspotTypes = new Set([
+  "suckling",
+  "heart",
+  "buzzing",
+  "mikeKelley",
+  "suburbia",
+  "nakedGuy"
+])
+
+function clearHotspots() {
+  hotspotLayer.innerHTML = ""
+}
+
+function getFrameHotspots(frameNum) {
+  const result = []
+
+  for (const [name, map] of Object.entries(maps)) {
+    if (!interactiveHotspotTypes.has(name)) continue
+
+    const entry = map[frameNum]
+    if (!entry) continue
+
+    const rects = Array.isArray(entry) ? entry : [entry]
+
+    for (const rect of rects) {
+      result.push({
+        type: name,
+        x: rect.x,
+        y: rect.y,
+        w: rect.w,
+        h: rect.h
+      })
+    }
+  }
+
+  return result
+}
+
+function renderHotspots(frameNum) {
+  hotspotLayer.innerHTML = ""
+
+  if (playing) return
+
+  const hotspots = getFrameHotspots(frameNum)
+
+  hotspots.forEach(h => {
+    const el = document.createElement("div")
+    el.className = "hotspot"
+
+    el.style.left = h.x + "px"
+    el.style.top = h.y + "px"
+    el.style.width = h.w + "px"
+    el.style.height = h.h + "px"
+
+    el.dataset.type = h.type
+
+   if (DEBUG_HOTSPOTS) {
+    const label = document.createElement("div")
+    label.textContent = h.type
+    label.style.position = "absolute"
+    label.style.left = "0"
+    label.style.top = "0"
+    label.style.font = "10px/1 Arial, sans-serif"
+    label.style.color = "#fff"
+    label.style.background = "rgba(255,0,0,0.65)"
+    label.style.padding = "2px 4px"
+    label.style.pointerEvents = "none"
+    el.appendChild(label)
+  }
+
+    el.addEventListener("pointerdown", e => {
+      e.stopPropagation()
+    })
+
+    el.addEventListener("click", e => {
+      e.stopPropagation()
+      handleHotspotClick(h.type)
+    })
+
+    hotspotLayer.appendChild(el)
+  })
+}
+
+function handleHotspotClick(type) {
+  if (playing) return
+
+  if (type === "suckling") {
+  moveToFrame10ThenPlaySuckling()
+  return
+}
+
+  if (type === "heart") {
+    moveToFrame15ThenPlayHeart()
+    return
+  }
+
+  if (type === "buzzing") {
+    moveToFrame4ThenPlayBuzzing()
+    return
+  }
+
+  if (type === "mikeKelley") {
+    if (!mkArmed) return
+    moveToFrame21ThenPlayMK()
+    return
+  }
+
+  if (type === "nakedGuy") {
+    if (!nakedArmed) return
+
+    nakedLargePending = true
+    stopNakedSmallReverse()
+
+    videoNakedSmall.pause()
+    videoNakedSmall.currentTime = 0
+    videoNakedSmall.style.opacity = "0"
+    videoNakedSmall.style.display = "none"
+
+    moveToFrame3ThenPlayNakedGuy()
+    return
+  }
+
+  if (type === "suburbia") {
+    moveToFrame22ThenGoToSuburbia()
+    return
+  }
 }
 
 let currentMapName = "buzzing"
@@ -726,60 +865,7 @@ function drawMapperBox(){
 function updateFrame(){
   frame.src = "frames/frame" + currentFrame + ".png"
 
-  hotspot.style.display = "none"
-  hotspot2.style.display = "none"
-
-  if (!playing && currentFrame === 10) {
-    hotspot.style.display = "block"
-    hotspot.style.left = "210px"
-    hotspot.style.top = "85px"
-    hotspot.style.width = "430px"
-    hotspot.style.height = "200px"
-
-  } else if (!playing && maps.heart[currentFrame]) {
-    const r = maps.heart[currentFrame]
-    hotspot.style.display = "block"
-    hotspot.style.left = r.x + "px"
-    hotspot.style.top = r.y + "px"
-    hotspot.style.width = r.w + "px"
-    hotspot.style.height = r.h + "px"
-
-  } else {
-    if (!playing && maps.buzzing[currentFrame]) {
-      const r = maps.buzzing[currentFrame]
-      hotspot.style.display = "block"
-      hotspot.style.left = r.x + "px"
-      hotspot.style.top = r.y + "px"
-      hotspot.style.width = r.w + "px"
-      hotspot.style.height = r.h + "px"
-    }
-
-    if (maps.nakedGuy[currentFrame] && !nakedActive && nakedArmed) {
-      const r = maps.nakedGuy[currentFrame]
-      hotspot2.style.display = "block"
-      hotspot2.style.left = r.x + "px"
-      hotspot2.style.top = r.y + "px"
-      hotspot2.style.width = r.w + "px"
-      hotspot2.style.height = r.h + "px"
-    }
-
-    if (!playing && maps.mikeKelley[currentFrame] && mkArmed) {
-      const r = maps.mikeKelley[currentFrame]
-      if (hotspot.style.display === "none") {
-        hotspot.style.display = "block"
-        hotspot.style.left = r.x + "px"
-        hotspot.style.top = r.y + "px"
-        hotspot.style.width = r.w + "px"
-        hotspot.style.height = r.h + "px"
-      } else {
-        hotspot2.style.display = "block"
-        hotspot2.style.left = r.x + "px"
-        hotspot2.style.top = r.y + "px"
-        hotspot2.style.width = r.w + "px"
-        hotspot2.style.height = r.h + "px"
-      }
-    }
-  }
+  renderHotspots(currentFrame)
 
   /* nakedGuy idle logic */
 
@@ -900,6 +986,7 @@ function resetSequence(){
   nakedActive = false
   nakedArmed = true
   nakedLargePending = false
+  nakedLargePlayed = false
   nakedLargeDirection = 1
   nakedSmallDirection = 1
 
@@ -921,10 +1008,11 @@ function playSucklingSequence(){
   if(currentFrame !== 10) return
 
   stopAllAmbientSounds()
+  clearHotspots()
 
   playing = true
   seqIndex = 0
-  hotspot.style.display = "none"
+  hotspotLayer.innerHTML = ""
 
   videoFull.src = sucklingSequence[0]
   videoFull.currentTime = 0
@@ -974,8 +1062,9 @@ function playHeart(startAudio = true){
   if (playing) return
 
   playing = true
-  hotspot.style.display = "none"
+  hotspotLayer.innerHTML = ""
 
+  clearHotspots()
   stopAllAmbientSounds()
 
   videoHeart.src = "media/heart.mp4"
@@ -1052,7 +1141,7 @@ function moveToFrame(targetFrame, onArrival) {
   if (playing) return
 
   playing = true
-  hotspot.style.display = "none"
+  clearHotspots()
 
   if (currentFrame === targetFrame) {
     onArrival()
@@ -1062,10 +1151,24 @@ function moveToFrame(targetFrame, onArrival) {
   stage.classList.add("dragging")
   frame.classList.add("blurring")
 
-  const step = currentFrame < targetFrame ? 1 : -1
+  const forwardDistance =
+    targetFrame >= currentFrame
+      ? targetFrame - currentFrame
+      : (totalFrames - currentFrame) + targetFrame
+
+  const backwardDistance =
+    currentFrame >= targetFrame
+      ? currentFrame - targetFrame
+      : currentFrame + (totalFrames - targetFrame)
+
+  const step = forwardDistance <= backwardDistance ? 1 : -1
 
   const move = () => {
     currentFrame += step
+
+    if (currentFrame > totalFrames) currentFrame = 1
+    if (currentFrame < 1) currentFrame = totalFrames
+
     updateFrame()
 
     if (currentFrame !== targetFrame) {
@@ -1078,6 +1181,15 @@ function moveToFrame(targetFrame, onArrival) {
   }
 
   setTimeout(move, 120)
+}
+
+function moveToFrame10ThenPlaySuckling(){
+  moveToFrame(10, () => {
+    setTimeout(() => {
+      playing = false
+      playSucklingSequence()
+    }, 200)
+  })
 }
 
 function moveToFrame15ThenPlayHeart(){
@@ -1095,16 +1207,32 @@ function moveToFrame15ThenPlayHeart(){
   })
 }
 
+function moveToFrame22ThenGoToSuburbia(){
+  moveToFrame(22, () => {
+    setTimeout(() => {
+      playing = false
+
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: "goto-suburbia" }, window.location.origin);
+      }
+    }, 200)
+  })
+}
+
+
+
+
 /* ---------- BUZZING ---------- */
 
 function playBuzzing(){
   if (playing) return
 
   stopAllAmbientSounds()
+  clearHotspots()
 
   playing = true
   buzzingActive = true
-  hotspot.style.display = "none"
+  hotspotLayer.innerHTML = ""
 
   videoBuzzing.src = "media/buzzing.mp4"
   videoBuzzing.currentTime = 0
@@ -1165,11 +1293,12 @@ function moveToFrame4ThenPlayBuzzing(){
 
 function playMK(){
   stopAllAmbientSounds()
+  clearHotspots()
 
   playing = true
   mkActive = true
   mkArmed = false
-  hotspot.style.display = "none"
+  hotspotLayer.innerHTML = ""
 
   const src = nextMK === 1 ? "media/mk01.mp4" : "media/mk02.mp4"
 
@@ -1218,11 +1347,12 @@ function moveToFrame3ThenPlayNakedGuy(){
 function playNakedGuyLarge(){
 
   nakedLargePending = false
+  clearHotspots()
 
   playing = true
   nakedActive = true
   nakedArmed = false
-  hotspot.style.display = "none"
+  hotspotLayer.innerHTML = ""
 
   videoNakedSmall.pause()
   videoNakedSmall.currentTime = 0
@@ -1366,86 +1496,6 @@ function playNakedSmallReverse(){
     videoNakedSmall.currentTime = t
   }, 33)
 }
-
-
-/* ---------- HOTSPOT CLICK ---------- */
-
-hotspot.addEventListener("pointerdown", e => {
-  e.stopPropagation()
-})
-
-hotspot.addEventListener("click", e => {
-  e.stopPropagation()
-
-  if (playing) return
-
-  if (currentFrame === 10) {
-    playSucklingSequence()
-    return
-  }
-
-  if (maps.heart[currentFrame]) {
-    moveToFrame15ThenPlayHeart()
-    return
-  }
-
-  if (maps.buzzing[currentFrame]) {
-    moveToFrame4ThenPlayBuzzing()
-    return
-  }
-
-  if (maps.nakedGuy[currentFrame]) {
-    if (!nakedArmed) return
-
-    nakedLargePending = true
-
-    stopNakedSmallReverse()
-    videoNakedSmall.pause()
-    videoNakedSmall.currentTime = 0
-    videoNakedSmall.style.opacity = "0"
-    videoNakedSmall.style.display = "none"
-
-    moveToFrame3ThenPlayNakedGuy()
-    return
-  }
-
-  if (maps.mikeKelley[currentFrame]) {
-  if (!mkArmed) return
-  moveToFrame21ThenPlayMK()
-  return
-}
-})
-
-hotspot2.addEventListener("pointerdown", e => {
-  e.stopPropagation()
-})
-
-hotspot2.addEventListener("click", e => {
-  e.stopPropagation()
-
-  if (playing) return
-
-  if (maps.nakedGuy[currentFrame]) {
-    if (!nakedArmed) return
-
-    nakedLargePending = true
-
-    stopNakedSmallReverse()
-    videoNakedSmall.pause()
-    videoNakedSmall.currentTime = 0
-    videoNakedSmall.style.opacity = "0"
-    videoNakedSmall.style.display = "none"
-
-    moveToFrame3ThenPlayNakedGuy()
-    return
-  }
-
-  if (maps.mikeKelley[currentFrame]) {
-    if (!mkArmed) return
-    moveToFrame21ThenPlayMK()
-    return
-  }
-})
 
 /* ---------- HEART SCRUB ---------- */
 
@@ -1606,7 +1656,7 @@ function stopDrag(){
 }
 
 stage.addEventListener("pointerdown", e => {
-  if (e.target === hotspot) return
+  if (e.target.classList && e.target.classList.contains("hotspot")) return
 
   if (heartScrubActive) {
     if (e.target === videoHeart) {
@@ -1766,6 +1816,8 @@ stage.addEventListener("click", () => {
 
 /* ---------- HOTSPOT MAPPER KEYS ---------- */
 
+const mapNames = ["heart", "buzzing", "suckling", "drum", "noNotThat", "doorCreak", "whisper1", "whisper2", "listen", "mikeKelley", "suburbia", "nakedGuy"]
+
 document.addEventListener("keydown", e => {
   if (e.key === "m" || e.key === "M") {
     mapperMode = !mapperMode
@@ -1773,29 +1825,27 @@ document.addEventListener("keydown", e => {
     return
   }
 
-document.addEventListener("keydown", e => {
   if (e.key === "f" || e.key === "F") {
     stageMode = stageMode === "fit" ? "fill" : "fit"
     fitStage()
+    return
   }
-})
 
-const mapNames = ["heart", "buzzing", "drum", "noNotThat", "doorCreak", "whisper1", "whisper2","listen","mikeKelley","nakedGuy"]
-let currentIndex = mapNames.indexOf(currentMapName)
+  let currentIndex = mapNames.indexOf(currentMapName)
 
-if (e.key === "[") {
-  currentIndex = (currentIndex - 1 + mapNames.length) % mapNames.length
-  currentMapName = mapNames[currentIndex]
-  drawMapperBox()
-  return
-}
+  if (e.key === "[") {
+    currentIndex = (currentIndex - 1 + mapNames.length) % mapNames.length
+    currentMapName = mapNames[currentIndex]
+    drawMapperBox()
+    return
+  }
 
-if (e.key === "]") {
-  currentIndex = (currentIndex + 1) % mapNames.length
-  currentMapName = mapNames[currentIndex]
-  drawMapperBox()
-  return
-}
+  if (e.key === "]") {
+    currentIndex = (currentIndex + 1) % mapNames.length
+    currentMapName = mapNames[currentIndex]
+    drawMapperBox()
+    return
+  }
 
   if (!mapperMode) return
 
@@ -1825,6 +1875,8 @@ if (e.key === "]") {
 
   drawMapperBox()
 })
+
+
 
 /* ---------- GLOBAL ---------- */
 
