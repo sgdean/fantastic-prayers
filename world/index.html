@@ -12,7 +12,7 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #000;
+      background: transparent;
     }
 
     body {
@@ -273,9 +273,29 @@ Iframe src: ${els.envFrame.getAttribute("src")}`;
   const video = els.transitionVideo;
   const audio = els.transitionAudio;
 
-  video.style.display = "block";
+  video.style.display = "none";
   video.src = src;
   video.currentTime = 0;
+
+  await new Promise((resolve, reject) => {
+    const onLoaded = () => {
+      cleanup();
+      resolve();
+    };
+
+    const onError = () => {
+      cleanup();
+      reject(new Error(`Failed to load transition video: ${src}`));
+    };
+
+    const cleanup = () => {
+      video.removeEventListener("loadeddata", onLoaded);
+      video.removeEventListener("error", onError);
+    };
+
+    video.addEventListener("loadeddata", onLoaded, { once: true });
+    video.addEventListener("error", onError, { once: true });
+  });
 
   if (audioSrc) {
     audio.src = audioSrc;
@@ -288,6 +308,8 @@ Iframe src: ${els.envFrame.getAttribute("src")}`;
   const loadPromise = swapEnvironmentSilently(toEnv, targetParams);
 
   try {
+    video.style.display = "block";
+    
     if (audioSrc) await audio.play();
     await video.play();
 
