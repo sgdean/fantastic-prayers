@@ -167,7 +167,7 @@
     const url = new URL(base, window.location.href);
 
     envLoadCounter += 1;
-    url.searchParams.set("load", envLoadCounter);
+    url.searchParams.set("load", Date.now());
 
     Object.entries(params).forEach(([key, value]) => {
       url.searchParams.set(key, value);
