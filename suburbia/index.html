@@ -27,7 +27,13 @@
     body {
       position: fixed;
       inset: 0;
-      cursor: none;
+      touch-action: none;
+    }
+
+    @media (pointer: fine) {
+      body {
+        cursor: none;
+      }
     }
 
     #viewport {
@@ -53,6 +59,7 @@
       height: 480px;
       overflow: hidden;
       background: #000;
+      touch-action: none;
     }
 
     #bg {
@@ -237,10 +244,10 @@
     const state = {
       mode: "boot", // boot | drift | shuttle | complete
       currentFrame: CONFIG.entryFrame,
-      mouseX: 320,
+      mouseX: 96,
       mouseY: 240,
       exitLockUntil: 0,
-      entryMouseX: 320,
+      entryMouseX: 96,
       entryMouseY: 240,
       hasMovedSinceUnlock: false,
       joeScale: 1,
@@ -543,11 +550,7 @@ Debug overlay: ${CONFIG.debug.overlay ? "on" : "off"}`;
       }
     }
 
-    function handlePointerMove(event) {
-      if (state.mode !== "drift") return;
-
-      unlockJoePlayback();
-
+    function updatePointerPosition(event) {
       const rect = els.app.getBoundingClientRect();
 
       const rawX = ((event.clientX - rect.left) / rect.width) * STAGE_W;
@@ -568,7 +571,59 @@ Debug overlay: ${CONFIG.debug.overlay ? "on" : "off"}`;
           state.hasMovedSinceUnlock = true;
         }
       }
+    }
 
+    function updateTouchPosition(touch) {
+      const rect = els.app.getBoundingClientRect();
+
+      const rawX = ((touch.clientX - rect.left) / rect.width) * STAGE_W;
+      const rawY = ((touch.clientY - rect.top) / rect.height) * STAGE_H;
+
+      const halfW = CONFIG.joeBaseWidth / 2;
+      const halfH = CONFIG.joeBaseHeight / 2;
+
+      state.mouseX = clamp(rawX, halfW, STAGE_W - halfW);
+      state.mouseY = clamp(rawY, halfH, STAGE_H - halfH);
+
+      if (performance.now() >= state.exitLockUntil) {
+        const dx = state.mouseX - state.entryMouseX;
+        const dy = state.mouseY - state.entryMouseY;
+        const movedDistance = Math.sqrt(dx * dx + dy * dy);
+
+        if (movedDistance >= CONFIG.exitMovementThreshold) {
+          state.hasMovedSinceUnlock = true;
+        }
+      }
+    }
+
+
+    function handlePointerMove(event) {
+      if (state.mode !== "drift") return;
+
+      unlockJoePlayback();
+      updatePointerPosition(event);
+      updateJoe();
+      updateDebug();
+    }
+
+    function handleTouchStart(event) {
+      if (state.mode !== "drift") return;
+      if (!event.touches.length) return;
+
+      event.preventDefault();
+      unlockJoePlayback();
+      updateTouchPosition(event.touches[0]);
+      updateJoe();
+      updateDebug();
+    }
+
+    function handleTouchMove(event) {
+      if (state.mode !== "drift") return;
+      if (!event.touches.length) return;
+
+      event.preventDefault();
+      unlockJoePlayback();
+      updateTouchPosition(event.touches[0]);
       updateJoe();
       updateDebug();
     }
@@ -603,9 +658,9 @@ Debug overlay: ${CONFIG.debug.overlay ? "on" : "off"}`;
 
       state.mode = "drift";
       state.currentFrame = CONFIG.entryFrame;
-      state.mouseX = 320;
+      state.mouseX = 96;
       state.mouseY = 240;
-      state.entryMouseX = 320;
+      state.entryMouseX = 96;
       state.entryMouseY = 240;
       state.hasMovedSinceUnlock = false;
       state.exitLockUntil = performance.now() + CONFIG.exitArmingDelayMs;
@@ -635,10 +690,19 @@ Debug overlay: ${CONFIG.debug.overlay ? "on" : "off"}`;
       renderFrame(CONFIG.entryFrame);
 
       window.addEventListener("resize", resizeCanvas);
-      window.addEventListener("mousemove", handlePointerMove);
+      window.addEventListener("pointermove", handlePointerMove);
       window.addEventListener("keydown", handleKeydown);
-      window.addEventListener("pointerdown", unlockJoePlayback);
-      window.addEventListener("touchstart", unlockJoePlayback, { passive: true });
+
+      window.addEventListener("pointerdown", (event) => {
+        if (state.mode !== "drift") return;
+        unlockJoePlayback();
+        updatePointerPosition(event);
+        updateJoe();
+        updateDebug();
+      });
+
+      els.app.addEventListener("touchstart", handleTouchStart, { passive: false });
+      els.app.addEventListener("touchmove", handleTouchMove, { passive: false });
 
       els.startButton.addEventListener("click", startExperience);
       els.startOverlay.addEventListener("click", startExperience);
