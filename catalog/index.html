@@ -379,24 +379,75 @@ Filenames reflect the CD-ROM build and may differ from original source files.
       button.type = "button";
       button.textContent = "Copy filename";
 
-      button.addEventListener("click", async () => {
-        try {
-          await navigator.clipboard.writeText(filename);
-          const previous = button.textContent;
-          button.textContent = "Copied";
-          setTimeout(() => {
-            button.textContent = previous;
-          }, 1200);
-        } catch (err) {
-          button.textContent = "Copy failed";
-          setTimeout(() => {
-            button.textContent = "Copy filename";
-          }, 1200);
+    button.addEventListener("click", async () => {
+      const file = fileInput.files[0];
+
+      if (!file) {
+        status.textContent = "Choose a file first.";
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "Uploading...";
+      status.textContent = "";
+
+      try {
+        const base64Data = await fileToBase64(file);
+
+        const payload = {
+          assetName: asset.filename,
+          filename: file.name,
+          mimeType: file.type || "application/octet-stream",
+          note: noteInput.value || "",
+          base64Data
+        };
+
+        const response = await fetch(UPLOAD_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (result.ok) {
+          button.textContent = "Uploaded";
+          status.textContent = "Upload complete.";
+          fileInput.value = "";
+          fileName.textContent = "No file chosen";
+          noteInput.value = "";
+        } else {
+          button.disabled = false;
+          button.textContent = "Upload";
+          status.textContent = result.error || "Upload failed.";
         }
-      });
+      } catch (error) {
+        button.disabled = false;
+        button.textContent = "Upload";
+        status.textContent = "Upload error.";
+        console.error("Upload error:", error);
+      }
+    });
 
       return button;
     }
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const result = reader.result;
+      const base64 = result.split(",")[1];
+      resolve(base64);
+    };
+
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 
 function createUploadUI(asset, mediaType) {
