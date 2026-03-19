@@ -14,9 +14,9 @@
       --line: rgba(0, 0, 0, 0.08);
       --line-strong: rgba(0, 0, 0, 0.12);
       --shadow:
-        0 0 0 1px rgba(0, 0, 0, 0.04),
-        0 1px 2px rgba(0, 0, 0, 0.04),
-        0 8px 24px rgba(0, 0, 0, 0.03);
+      0 0 0 1px rgba(0, 0, 0, 0.04),
+      0 1px 2px rgba(0, 0, 0, 0.04),
+      0 8px 24px rgba(0, 0, 0, 0.03);
       --radius: 18px;
       --radius-sm: 12px;
       --max: 920px;
@@ -191,8 +191,8 @@
       line-height: 1;
       cursor: pointer;
       box-shadow:
-        0 0 0 1px rgba(0,0,0,0.05),
-        0 1px 2px rgba(0,0,0,0.05);
+      0 0 0 1px rgba(0,0,0,0.05),
+      0 1px 2px rgba(0,0,0,0.05);
       transition: box-shadow 160ms ease, color 160ms ease, transform 160ms ease;
     }
 
@@ -201,8 +201,8 @@
       color: var(--text);
       transform: translateY(-1px);
       box-shadow:
-        0 0 0 1px rgba(0,0,0,0.08),
-        0 2px 6px rgba(0,0,0,0.06);
+      0 0 0 1px rgba(0,0,0,0.08),
+      0 2px 6px rgba(0,0,0,0.06);
     }
 
     .asset-upload-file-name {
@@ -238,8 +238,8 @@
       line-height: 1;
       cursor: pointer;
       box-shadow:
-        0 0 0 1px rgba(0, 0, 0, 0.05),
-        0 1px 2px rgba(0, 0, 0, 0.05);
+      0 0 0 1px rgba(0, 0, 0, 0.05),
+      0 1px 2px rgba(0, 0, 0, 0.05);
       transition: box-shadow 160ms ease, color 160ms ease, transform 160ms ease;
     }
 
@@ -247,8 +247,8 @@
       color: var(--text);
       transform: translateY(-1px);
       box-shadow:
-        0 0 0 1px rgba(0, 0, 0, 0.08),
-        0 2px 6px rgba(0, 0, 0, 0.06);
+      0 0 0 1px rgba(0, 0, 0, 0.08),
+      0 2px 6px rgba(0, 0, 0, 0.06);
     }
 
     .asset-description {
@@ -341,7 +341,7 @@
       <h1>Walls That Speak asset reference</h1>
       <p>
         This page lists the audio and video assets currently used in the Walls prototype.
-Filenames reflect the CD-ROM build and may differ from original source files.
+        Filenames reflect the CD-ROM build and may differ from original source files.
       </p>
     </div>
 
@@ -379,236 +379,208 @@ Filenames reflect the CD-ROM build and may differ from original source files.
       button.type = "button";
       button.textContent = "Copy filename";
 
-    button.addEventListener("click", async () => {
-      const file = fileInput.files[0];
-
-      if (!file) {
-        status.textContent = "Choose a file first.";
-        return;
-      }
-
-      button.disabled = true;
-      button.textContent = "Uploading...";
-      status.textContent = "";
-
-      try {
-        const base64Data = await fileToBase64(file);
-
-        const payload = {
-          assetName: asset.filename,
-          filename: file.name,
-          mimeType: file.type || "application/octet-stream",
-          note: noteInput.value || "",
-          base64Data
-        };
-
-        const response = await fetch(UPLOAD_ENDPOINT, {
-          method: "POST",
-          headers: {
-            "Content-Type": "text/plain;charset=utf-8"
-          },
-          body: JSON.stringify(payload)
-        });
-
-        const result = await response.json();
-
-        if (result.ok) {
-          button.textContent = "Uploaded";
-          status.textContent = "Upload complete.";
-          fileInput.value = "";
-          fileName.textContent = "No file chosen";
-          noteInput.value = "";
-        } else {
-          button.disabled = false;
-          button.textContent = "Upload";
-          status.textContent = result.error || "Upload failed.";
+      button.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(filename);
+          const previous = button.textContent;
+          button.textContent = "Copied";
+          setTimeout(() => {
+            button.textContent = previous;
+          }, 1200);
+        } catch (err) {
+          button.textContent = "Copy failed";
+          setTimeout(() => {
+            button.textContent = "Copy filename";
+          }, 1200);
         }
-      } catch (error) {
-        button.disabled = false;
-        button.textContent = "Upload";
-        status.textContent = "Upload error.";
-        console.error("Upload error:", error);
-      }
-    });
+      });
 
       return button;
     }
 
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
 
-    reader.onload = () => {
-      const result = reader.result;
-      const base64 = result.split(",")[1];
-      resolve(base64);
-    };
+        reader.onload = () => {
+          const result = reader.result;
+          const base64 = result.split(",")[1];
+          resolve(base64);
+        };
 
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-
-function createUploadUI(asset, mediaType) {
-  const wrap = document.createElement("div");
-  wrap.className = "asset-upload";
-
-  const label = document.createElement("div");
-  label.className = "asset-upload-label";
-  label.textContent = "Upload matching source file";
-
-  const fileRow = document.createElement("div");
-  fileRow.className = "asset-upload-file-row";
-
-  const fileInput = document.createElement("input");
-  fileInput.type = "file";
-  fileInput.accept = mediaType === "audio" ? "audio/*" : "video/*";
-  fileInput.className = "asset-upload-hidden-input";
-  fileInput.id = `file-${asset.id}`;
-
-  const fileButton = document.createElement("label");
-  fileButton.className = "asset-upload-file-button";
-  fileButton.htmlFor = fileInput.id;
-  fileButton.textContent = "Choose file";
-
-  const fileName = document.createElement("div");
-  fileName.className = "asset-upload-file-name";
-  fileName.textContent = "No file chosen";
-
-  fileInput.addEventListener("change", () => {
-    fileName.textContent = fileInput.files[0]
-      ? fileInput.files[0].name
-      : "No file chosen";
-  });
-
-  const noteInput = document.createElement("input");
-  noteInput.type = "text";
-  noteInput.placeholder = "Optional note";
-
-  const button = document.createElement("button");
-  button.type = "button";
-  button.textContent = "Upload";
-
-  const status = document.createElement("div");
-  status.className = "asset-upload-status";
-
-  button.addEventListener("click", async () => {
-    const file = fileInput.files[0];
-
-    if (!file) {
-      status.textContent = "Choose a file first.";
-      return;
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
     }
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("assetName", asset.filename);
-    formData.append("note", noteInput.value || "");
+    function createUploadUI(asset, mediaType) {
+      const wrap = document.createElement("div");
+      wrap.className = "asset-upload";
 
-    button.disabled = true;
-    button.textContent = "Uploading...";
-    status.textContent = "";
+      const label = document.createElement("div");
+      label.className = "asset-upload-label";
+      label.textContent = "Upload matching source file";
 
-    try {
-      const response = await fetch(UPLOAD_ENDPOINT, {
-        method: "POST",
-        body: formData
+      const fileRow = document.createElement("div");
+      fileRow.className = "asset-upload-file-row";
+
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.accept = mediaType === "audio" ? "audio/*" : "video/*";
+      fileInput.className = "asset-upload-hidden-input";
+      fileInput.id = `file-${asset.id}`;
+
+      const fileButton = document.createElement("label");
+      fileButton.className = "asset-upload-file-button";
+      fileButton.htmlFor = fileInput.id;
+      fileButton.textContent = "Choose file";
+
+      const fileName = document.createElement("div");
+      fileName.className = "asset-upload-file-name";
+      fileName.textContent = "No file chosen";
+
+      fileInput.addEventListener("change", () => {
+        fileName.textContent = fileInput.files[0]
+        ? fileInput.files[0].name
+        : "No file chosen";
       });
 
-      const result = await response.json();
+      const noteInput = document.createElement("input");
+      noteInput.type = "text";
+      noteInput.placeholder = "Optional note";
 
-      if (result.ok) {
-        button.textContent = "Uploaded";
-        status.textContent = "Upload complete.";
-        fileInput.value = "";
-        fileName.textContent = "No file chosen";
-        noteInput.value = "";
-      } else {
-        button.disabled = false;
-        button.textContent = "Upload";
-        status.textContent = result.error || "Upload failed.";
-      }
-    } catch (error) {
-      button.disabled = false;
+      const button = document.createElement("button");
+      button.type = "button";
       button.textContent = "Upload";
-      status.textContent = "Upload error.";
-      console.error("Upload error:", error);
+
+      const status = document.createElement("div");
+      status.className = "asset-upload-status";
+
+      button.addEventListener("click", async () => {
+        const file = fileInput.files[0];
+
+        if (!file) {
+          status.textContent = "Choose a file first.";
+          return;
+        }
+
+        button.disabled = true;
+        button.textContent = "Uploading...";
+        status.textContent = "";
+
+        try {
+          const base64Data = await fileToBase64(file);
+
+          const payload = {
+            assetName: asset.filename,
+            filename: file.name,
+            mimeType: file.type || "application/octet-stream",
+            note: noteInput.value || "",
+            base64Data
+          };
+
+          const response = await fetch(UPLOAD_ENDPOINT, {
+            method: "POST",
+            headers: {
+              "Content-Type": "text/plain;charset=utf-8"
+            },
+            body: JSON.stringify(payload)
+          });
+
+          const result = await response.json();
+
+          if (result.ok) {
+            button.textContent = "Uploaded";
+            status.textContent = "Upload complete.";
+            fileInput.value = "";
+            fileName.textContent = "No file chosen";
+            noteInput.value = "";
+          } else {
+            button.disabled = false;
+            button.textContent = "Upload";
+            status.textContent = result.error || "Upload failed.";
+          }
+        } catch (error) {
+          button.disabled = false;
+          button.textContent = "Upload";
+          status.textContent = "Upload error.";
+          console.error("Upload error:", error);
+        }
+      });
+
+      fileRow.appendChild(fileButton);
+      fileRow.appendChild(fileName);
+
+      wrap.appendChild(label);
+      wrap.appendChild(fileInput);
+      wrap.appendChild(fileRow);
+      wrap.appendChild(noteInput);
+      wrap.appendChild(button);
+      wrap.appendChild(status);
+
+      return wrap;
     }
-  });
 
-  fileRow.appendChild(fileButton);
-  fileRow.appendChild(fileName);
 
-  wrap.appendChild(label);
-  wrap.appendChild(fileInput);
-  wrap.appendChild(fileRow);
-  wrap.appendChild(noteInput);
-  wrap.appendChild(button);
-  wrap.appendChild(status);
+    function renderAudioCard(asset) {
+      const card = document.createElement("article");
+      card.className = "asset-card";
 
-  return wrap;
-}
+      const top = document.createElement("div");
+      top.className = "asset-top";
 
-function renderAudioCard(asset) {
-  const card = document.createElement("article");
-  card.className = "asset-card";
+      const titleWrap = document.createElement("div");
+      titleWrap.className = "asset-title-wrap";
 
-  const top = document.createElement("div");
-  top.className = "asset-top";
+      const title = document.createElement("h3");
+      title.className = "asset-title";
+      title.textContent = asset.title;
 
-  const titleWrap = document.createElement("div");
-  titleWrap.className = "asset-title-wrap";
+      const filename = document.createElement("div");
+      filename.className = "asset-filename";
+      filename.textContent = asset.filename;
 
-  const title = document.createElement("h3");
-  title.className = "asset-title";
-  title.textContent = asset.title;
+      titleWrap.appendChild(title);
+      titleWrap.appendChild(filename);
+      top.appendChild(titleWrap);
+      top.appendChild(createCopyButton(asset.filename));
 
-  const filename = document.createElement("div");
-  filename.className = "asset-filename";
-  filename.textContent = asset.filename;
+      const description = document.createElement("p");
+      description.className = "asset-description";
+      description.textContent = asset.description || "";
 
-  titleWrap.appendChild(title);
-  titleWrap.appendChild(filename);
-  top.appendChild(titleWrap);
-  top.appendChild(createCopyButton(asset.filename));
+      const meta = document.createElement("div");
+      meta.className = "asset-meta";
 
-  const description = document.createElement("p");
-  description.className = "asset-description";
-  description.textContent = asset.description || "";
+      const loopPill = document.createElement("div");
+      loopPill.className = "pill";
+      loopPill.textContent = asset.loop ? "Looped" : "Not looped";
+      meta.appendChild(loopPill);
 
-  const meta = document.createElement("div");
-  meta.className = "asset-meta";
+      const playerWrap = document.createElement("div");
+      playerWrap.className = "asset-player";
 
-  const loopPill = document.createElement("div");
-  loopPill.className = "pill";
-  loopPill.textContent = asset.loop ? "Looped" : "Not looped";
-  meta.appendChild(loopPill);
+      const audio = document.createElement("audio");
+      audio.controls = true;
+      audio.preload = "none";
+      audio.src = "../" + asset.path;
+      playerWrap.appendChild(audio);
 
-  const playerWrap = document.createElement("div");
-  playerWrap.className = "asset-player";
+      card.appendChild(top);
+      card.appendChild(description);
+      card.appendChild(meta);
+      card.appendChild(playerWrap);
+      card.appendChild(createUploadUI(asset, "audio"));
 
-  const audio = document.createElement("audio");
-  audio.controls = true;
-  audio.preload = "none";
-  audio.src = "../" + asset.path;
-  playerWrap.appendChild(audio);
+      if (asset.notes && asset.notes.trim()) {
+        const notes = document.createElement("div");
+        notes.className = "notes";
+        notes.textContent = asset.notes;
+        card.appendChild(notes);
+      }
 
-  card.appendChild(top);
-  card.appendChild(description);
-  card.appendChild(meta);
-  card.appendChild(playerWrap);
-  card.appendChild(createUploadUI(asset, "audio"));
-
-  if (asset.notes && asset.notes.trim()) {
-    const notes = document.createElement("div");
-    notes.className = "notes";
-    notes.textContent = asset.notes;
-    card.appendChild(notes);
-  }
-
-  return card;
-}
+      return card;
+    }
 
 
     function renderVideoCard(asset) {
