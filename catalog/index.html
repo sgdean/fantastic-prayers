@@ -12,15 +12,18 @@
       --muted: #6a6a6a;
       --soft: #8b8b8b;
       --line: rgba(0, 0, 0, 0.08);
-      --line-strong: rgba(0, 0, 0, 0.12);
       --shadow:
-      0 0 0 1px rgba(0, 0, 0, 0.04),
-      0 1px 2px rgba(0, 0, 0, 0.04),
-      0 8px 24px rgba(0, 0, 0, 0.03);
+        0 0 0 1px rgba(0, 0, 0, 0.04),
+        0 1px 2px rgba(0, 0, 0, 0.04),
+        0 8px 24px rgba(0, 0, 0, 0.03);
       --radius: 18px;
       --radius-sm: 12px;
       --max: 920px;
       --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+
+      --accent-info: #c89f12;
+      --accent-success: #1f9d55;
+      --accent-error: #c43d2f;
     }
 
     * {
@@ -154,10 +157,76 @@
       word-break: break-word;
     }
 
+    .copy-btn {
+      flex-shrink: 0;
+      border: 0;
+      background: white;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+      line-height: 1;
+      cursor: pointer;
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.05),
+        0 1px 2px rgba(0, 0, 0, 0.05);
+      transition: box-shadow 160ms ease, color 160ms ease, transform 160ms ease;
+    }
+
+    .copy-btn:hover {
+      color: var(--text);
+      transform: translateY(-1px);
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.08),
+        0 2px 6px rgba(0, 0, 0, 0.06);
+    }
+
+    .asset-description {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 14px;
+      text-wrap: pretty;
+    }
+
+    .asset-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 12px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04);
+    }
+
+    .asset-player audio {
+      width: 100%;
+      display: block;
+      background: transparent;
+      outline: none;
+    }
+
+    .asset-player video {
+      max-width: 420px;
+      height: auto;
+      display: block;
+      border-radius: var(--radius-sm);
+      background: #000;
+      outline: 1px solid rgba(0, 0, 0, 0.08);
+      outline-offset: -1px;
+    }
+
     .asset-upload {
       margin-top: 18px;
       padding-top: 16px;
-      border-top: 1px solid rgba(0,0,0,0.08);
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
     }
 
     .asset-upload-label {
@@ -191,8 +260,8 @@
       line-height: 1;
       cursor: pointer;
       box-shadow:
-      0 0 0 1px rgba(0,0,0,0.05),
-      0 1px 2px rgba(0,0,0,0.05);
+        0 0 0 1px rgba(0, 0, 0, 0.05),
+        0 1px 2px rgba(0, 0, 0, 0.05);
       transition: box-shadow 160ms ease, color 160ms ease, transform 160ms ease;
     }
 
@@ -201,13 +270,19 @@
       color: var(--text);
       transform: translateY(-1px);
       box-shadow:
-      0 0 0 1px rgba(0,0,0,0.08),
-      0 2px 6px rgba(0,0,0,0.06);
+        0 0 0 1px rgba(0, 0, 0, 0.08),
+        0 2px 6px rgba(0, 0, 0, 0.06);
     }
 
     .asset-upload-file-name {
       font-size: 13px;
       color: var(--muted);
+      transition: color 160ms ease;
+    }
+
+    .asset-upload-file-name.has-file {
+      color: var(--accent-info);
+      font-weight: 500;
     }
 
     .asset-upload input[type="text"] {
@@ -215,85 +290,27 @@
       padding: 8px 10px;
       font-size: 13px;
       border-radius: var(--radius-sm);
-      border: 1px solid rgba(0,0,0,0.12);
-      background: rgba(255,255,255,0.85);
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      background: rgba(255, 255, 255, 0.85);
       margin-bottom: 10px;
       font-family: inherit;
     }
 
     .asset-upload-status {
       font-size: 12px;
-      color: #777;
       margin-top: 8px;
+      color: var(--soft);
+      transition: color 160ms ease;
     }
 
-    .copy-btn {
-      flex-shrink: 0;
-      border: 0;
-      background: white;
-      color: var(--muted);
-      border-radius: 999px;
-      padding: 8px 12px;
-      font-size: 12px;
-      line-height: 1;
-      cursor: pointer;
-      box-shadow:
-      0 0 0 1px rgba(0, 0, 0, 0.05),
-      0 1px 2px rgba(0, 0, 0, 0.05);
-      transition: box-shadow 160ms ease, color 160ms ease, transform 160ms ease;
+    .asset-upload-status.success {
+      color: var(--accent-success);
+      font-weight: 600;
     }
 
-    .copy-btn:hover {
-      color: var(--text);
-      transform: translateY(-1px);
-      box-shadow:
-      0 0 0 1px rgba(0, 0, 0, 0.08),
-      0 2px 6px rgba(0, 0, 0, 0.06);
-    }
-
-    .asset-description {
-      margin: 0 0 12px;
-      color: var(--muted);
-      font-size: 14px;
-      text-wrap: pretty;
-    }
-
-    .asset-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      border-radius: 999px;
-      padding: 5px 9px;
-      font-size: 12px;
-      color: var(--muted);
-      background: rgba(255, 255, 255, 0.8);
-      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04);
-    }
-
-    .asset-player audio {
-      width: 100%;
-      display: block;
-    }
-
-    .asset-player video {
-      max-width: 420px;
-      height: auto;
-      display: block;
-      border-radius: var(--radius-sm);
-      background: #000;
-      outline: 1px solid rgba(0, 0, 0, 0.08);
-      outline-offset: -1px;
-    }
-
-    .asset-player audio {
-      background: transparent;
-      outline: none;
+    .asset-upload-status.error {
+      color: var(--accent-error);
+      font-weight: 600;
     }
 
     .notes {
@@ -440,9 +457,13 @@
       fileName.textContent = "No file chosen";
 
       fileInput.addEventListener("change", () => {
-        fileName.textContent = fileInput.files[0]
-        ? fileInput.files[0].name
-        : "No file chosen";
+        if (fileInput.files[0]) {
+          fileName.textContent = fileInput.files[0].name;
+          fileName.classList.add("has-file");
+        } else {
+          fileName.textContent = "No file chosen";
+          fileName.classList.remove("has-file");
+        }
       });
 
       const noteInput = document.createElement("input");
@@ -460,12 +481,14 @@
         const file = fileInput.files[0];
 
         if (!file) {
+          status.className = "asset-upload-status error";
           status.textContent = "Choose a file first.";
           return;
         }
 
         button.disabled = true;
         button.textContent = "Uploading...";
+        status.className = "asset-upload-status";
         status.textContent = "";
 
         try {
@@ -491,18 +514,22 @@
 
           if (result.ok) {
             button.textContent = "Uploaded";
+            status.className = "asset-upload-status success";
             status.textContent = "Upload complete.";
             fileInput.value = "";
             fileName.textContent = "No file chosen";
+            fileName.classList.remove("has-file");
             noteInput.value = "";
           } else {
             button.disabled = false;
             button.textContent = "Upload";
+            status.className = "asset-upload-status error";
             status.textContent = result.error || "Upload failed.";
           }
         } catch (error) {
           button.disabled = false;
           button.textContent = "Upload";
+          status.className = "asset-upload-status error";
           status.textContent = "Upload error.";
           console.error("Upload error:", error);
         }
@@ -520,7 +547,6 @@
 
       return wrap;
     }
-
 
     function renderAudioCard(asset) {
       const card = document.createElement("article");
@@ -581,7 +607,6 @@
 
       return card;
     }
-
 
     function renderVideoCard(asset) {
       const card = document.createElement("article");

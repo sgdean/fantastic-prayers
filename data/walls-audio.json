@@ -63,11 +63,21 @@
     "notes": ""
   },
   {
-    "id": "suburbia-loop",
-    "title": "Suburbia ambient sound",
+    "id": "walls-audio-008",
+    "title": "Suburbia transition sound",
     "filename": "suburbia.wav",
     "path": "transitions/suburbia.wav",
     "description": "Ambient audio used during transition into and out of Suburbia.",
-    "loop": false
+    "loop": false,
+    "notes": ""
+  },
+  {
+    "id": "walls-audio-009",
+    "title": "Kitchen transition sound",
+    "filename": "kitchen.wav",
+    "path": "transitions/kitchen.wav",
+    "description": "Ambient audio used during transition into and out of Kitchen.",
+    "loop": false,
+    "notes": ""
   }
 ]
