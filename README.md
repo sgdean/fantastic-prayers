@@ -1,14 +1,18 @@
-# Fantastic Prayers (1995)
-### Restoration prototype
+# Fantastic Prayers
+### Working proposal and browser reassembly prototype
 
 A web reconstruction and archival recovery project for the CD-ROM work  
-**Fantastic Prayers** by Tony Oursler, Constance DeJong, and Stephen Vitiello.
+**Fantastic Prayers** by Constance DeJong, Tony Oursler, and Stephen Vitiello.
 
-This repository contains a working web prototype of **Fantastic Prayers** (1995), originally created by Tony Oursler, Constance DeJong, and Stephen Vitiello.
+This repository contains the working project website and the first browser
+reassembly prototype for **Fantastic Prayers**, originally created by Constance
+DeJong, Tony Oursler, and Stephen Vitiello.
 
-The goal of this project is to reconstruct the original interactive experience from the CD-ROM while also supporting the recovery of original media assets that may exist in collaborators' archives.
-
-The prototype currently focuses on rebuilding the **Walls** section of the work.
+The website shares the preservation, emulation, and non-destructive disassembly
+work already accomplished; introduces the ten designed sections; and opens a
+conversation about faithful reconstruction, representative browser excerpts, and
+possible future forms. The interactive prototype currently focuses on rebuilding
+**Walls That Speak**.
 
 ---
 
@@ -26,24 +30,14 @@ https://fantasticprayers.org/catalog
 
 fantastic-prayers/
 │
-├─ index.html
-│   Entry page for the prototype (password protected).
-│
-├─ catalog/
-│   Internal asset catalog used to review and reconcile media files.
-│
-├─ data/
-│   JSON files describing audio and video assets used in the prototype.
-│
-├─ assets/
-│   Extracted media from the original CD-ROM.
-│
-│   ├─ audio/
-│   └─ video/
-│
-├─ frames/
-│   Image frames used for the Walls interface.
-│
+├─ index.html          Password-gated working-site entry
+├─ project/            Artist-facing project update
+├─ environments/       Index of the ten designed sections
+├─ site-assets/        Shared presentation CSS and entry behavior
+├─ world/              Transition into the Walls prototype
+├─ walls/              Walls That Speak browser reassembly
+├─ catalog/            Internal Walls asset-reference interface
+├─ data/               Walls audio/video metadata
 └─ README.md
 
 ---
@@ -130,22 +124,26 @@ The catalog UI reads these files to generate the review interface.
 
 # Current scope
 
-The repository currently reconstructs:
+The repository currently presents:
 
-- the **Walls** environment
+- a working project update for artist review
+- an initial index of all ten designed sections
+- the **Walls That Speak** browser prototype
 - associated audio triggers
 - associated video interactions
 - a catalog system for asset recovery
 
-Future work may include reconstruction of additional sections of the original CD-ROM.
+Current next steps include emulator recordings, interactive browser excerpts,
+deeper project history, and reconstruction of additional sections of the original
+CD-ROM.
 
 ---
 
 # Authors of the original work
 
-Tony Oursler  
-Constance DeJong  
-Stephen Vitiello  
+- Constance DeJong
+- Tony Oursler
+- Stephen Vitiello
 
 Fantastic Prayers was originally released as a CD-ROM in 1995.
 
@@ -153,8 +151,10 @@ Fantastic Prayers was originally released as a CD-ROM in 1995.
 
 # Project status
 
-This repository is an experimental reconstruction and archival effort intended to:
+This repository is a working artist-review site and experimental reconstruction
+effort intended to:
 
-- recover original media assets
-- preserve the structure of the work
-- explore how the project can live again in modern web technology
+- communicate the preservation and disassembly work clearly;
+- recover and reconcile original media assets;
+- preserve the structure and behavior of the work;
+- explore how the project can live again in modern web technology.
