@@ -2,9 +2,10 @@
   const definitions = {
     emulator: 'Software that lets one computer behave like an older computer. Here, it recreates the Macintosh system <em>Fantastic Prayers</em> needs so the original CD-ROM can run on Steven\'s laptop.',
     director: 'At the time <em>Fantastic Prayers</em> was made, Director was Macromedia\'s software for assembling images, sound, video, animation, and interaction. A Director file acts as a container for the media and scripts that make an interactive section work. Adobe later acquired Macromedia and discontinued Director.',
+    'design-document': 'The original 42-page document Steven wrote while <em>Fantastic Prayers</em> was being made. It describes the intended structure, interactions, sound, images, and behavior of each section. What it says was planned may differ from what was built or released.',
     fingerprint: 'A short code calculated from the contents of a file, often called a checksum. If any part of the file changes, the code changes too. This lets us confirm that a preserved file remains identical.',
     hotspots: 'Areas of the screen programmed to respond to the pointer. A rollover reacts when the pointer moves across it. A clickable hotspot reacts when the visitor clicks or taps.',
-    reconstruction: 'A new implementation that aims to reproduce the released artwork\'s appearance, sound, timing, and behavior in modern browser technology. It is separate from the generative new work proposed elsewhere on this site.',
+    reconstruction: 'A new implementation that aims to reproduce the released artwork\'s appearance, sound, timing, and behavior using modern web browser technology.',
     rollover: 'An interaction triggered when the pointer moves across a particular area of the screen, without requiring a click.'
   };
   const terms = Array.from(document.querySelectorAll('.glossary-term'));
