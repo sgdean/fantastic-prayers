@@ -30,10 +30,10 @@ https://fantasticprayers.org/catalog
 
 fantastic-prayers/
 │
-├─ index.html          Password-gated working-site entry
+├─ index.html          Working-site entry
 ├─ project/            Artist-facing project update
 ├─ environments/       Index of the ten designed sections
-├─ site-assets/        Shared presentation CSS and entry behavior
+├─ site-assets/        Shared presentation CSS and glossary behavior
 ├─ world/              Transition into the Walls prototype
 ├─ walls/              Walls That Speak browser reassembly
 ├─ catalog/            Internal Walls asset-reference interface
