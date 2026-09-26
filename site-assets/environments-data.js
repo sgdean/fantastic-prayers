@@ -15,9 +15,9 @@ window.FP_ENVIRONMENTS = [
       ["6", "recovered videos", "2:25 total"],
       ["80–150", "estimated hours", "full reconstruction"]
     ],
-    recordingTitle: "A short walk down Ludlow Street.",
+    recordingTitle: "One way through Ludlow Street.",
     vimeoId: "1230511431",
-    recordingCopy: "This space will hold a thirty-to-sixty-second recording from the emulator. The goal is to show movement along the street and at least one of its links, sounds, or changing states.",
+    recordingCopy: "This is one route through Ludlow Street, with its changes of view, sound, and direction. Every visit can take a different path. Duration: 00:53. Turn your sound up.",
     excerptTitle: "One street-level interaction.",
     excerptCopy: "The browser excerpt might focus on the pay phone, the graffiti text, or one of the street's portals. I will choose the moment after spending more time in the emulator and reviewing the design document.",
     historicalUrl: "https://awp.diaart.org/fpcd/ludlow.html"
@@ -38,9 +38,9 @@ window.FP_ENVIRONMENTS = [
       ["12", "recovered videos", "4:10 total"],
       ["28–55", "estimated hours", "full reconstruction"]
     ],
-    recordingTitle: "An object, opened.",
+    recordingTitle: "One way into Lost Things.",
     vimeoId: "1230511521",
-    recordingCopy: "The emulator recording will follow one object far enough to show how a small thing becomes an image, a voice, a song, or another location.",
+    recordingCopy: "This is one route through Lost Things, following the choices I made during this visit. Other paths lead to other objects, sounds, and images. Duration: 02:35. Turn your sound up.",
     excerptTitle: "A lost thing in the browser.",
     excerptCopy: "The excerpt could center on one object and the change it triggers. That would give us a bounded interaction while preserving the sense that many more objects remain to be found.",
     historicalUrl: "https://awp.diaart.org/fpcd/lostthings.html"
@@ -61,9 +61,9 @@ window.FP_ENVIRONMENTS = [
       ["0", "section audio files", "shared sound remains possible"],
       ["33–65", "estimated hours", "full reconstruction"]
     ],
-    recordingTitle: "Following the strand.",
+    recordingTitle: "One way through Hair.",
     vimeoId: "1230511489",
-    recordingCopy: "The emulator recording will establish the basic movement of Hair: what appears first, what the visitor can affect, and how images and video change one another.",
+    recordingCopy: "This is one route through Hair, from the choices I made in the emulator. The order can change with another visit. Duration: 02:38. Turn your sound up.",
     excerptTitle: "A transformation from Hair.",
     excerptCopy: "The excerpt candidate will come from the emulator review. It should reveal a rule or transformation, not just present one of the recovered videos by itself.",
     historicalUrl: "https://awp.diaart.org/fpcd/hair.html"
@@ -84,9 +84,9 @@ window.FP_ENVIRONMENTS = [
       ["26", "recovered sounds", "8:32 total"],
       ["100–190", "estimated hours", "full reconstruction"]
     ],
-    recordingTitle: "Excavating the Graveyard.",
+    recordingTitle: "One way through Graveyard.",
     vimeoId: "1230511449",
-    recordingCopy: "The emulator recording should capture movement through the site and one reveal, without trying to summarize an environment built from dozens of video fragments.",
+    recordingCopy: "This is one route through Graveyard, with one sequence of movement and discovery. It is a chosen path through an environment built from many fragments. Duration: 02:19. Turn your sound up.",
     excerptTitle: "A cinematic reveal.",
     excerptCopy: "A strong excerpt will show how an action, camera movement, and media fragment work together. The choice should make Graveyard's lens-driven character visible in a small space.",
     historicalUrl: "https://awp.diaart.org/fpcd/graveyard.html"
@@ -131,9 +131,9 @@ window.FP_ENVIRONMENTS = [
       ["16", "Director containers", "linked subsections"],
       ["125–225", "estimated hours", "full reconstruction"]
     ],
-    recordingTitle: "Taking the Jacket apart.",
+    recordingTitle: "One way through Jacket.",
     vimeoId: "1230515077",
-    recordingCopy: "The emulator recording will enter one subsection and return, showing how a part of the jacket becomes a distinct world without losing its place in the whole.",
+    recordingCopy: "This is one route through Jacket, following the connections I chose for this visit. Another path would open another set of materials and histories. Duration: 02:45. Turn your sound up.",
     excerptTitle: "One stitch in a larger structure.",
     excerptCopy: "The excerpt should pair text with image and sound, then make clear that it represents one route through a much larger network of material and historical associations.",
     historicalUrl: "https://awp.diaart.org/fpcd/jacket.html"
@@ -154,9 +154,9 @@ window.FP_ENVIRONMENTS = [
       ["10", "recovered videos", "4:14 total"],
       ["175–325", "estimated hours", "full reconstruction"]
     ],
-    recordingTitle: "A surface that will not stay still.",
+    recordingTitle: "One way through Natatorium.",
     vimeoId: "1230511540",
-    recordingCopy: "The emulator recording will pan across the photographed interior and reveal several layers, giving a sense of how much can be hidden inside one architectural view.",
+    recordingCopy: "This is one route through Natatorium, moving across a surface and into the layers I chose to open. Another visit can follow a different sequence. Duration: 01:26. Turn your sound up.",
     excerptTitle: "One surface, several layers.",
     excerptCopy: "The excerpt should let a visitor change a small area through more than one state. That would test both the visual layering and the rules that keep its short sounds from becoming noise.",
     historicalUrl: "https://awp.diaart.org/fpcd/natatorium.html"
@@ -177,9 +177,9 @@ window.FP_ENVIRONMENTS = [
       ["1", "recovered sound", "18 seconds"],
       ["23–50", "estimated hours", "full reconstruction"]
     ],
-    recordingTitle: "Playing the wheel.",
+    recordingTitle: "One turn through Empathy Wheel.",
     vimeoId: "1230511548",
-    recordingCopy: "The emulator recording will show the wheel in use, the response it produces, and the special placement of the shared video-eye navigation.",
+    recordingCopy: "This is one route through Empathy Wheel, following the turns I made during this visit. Each set of choices produces its own sequence. Duration: 00:38. Turn your sound up.",
     excerptTitle: "A turn of the wheel.",
     excerptCopy: "A bounded browser excerpt could reproduce one part of the wheel and a small set of responses. It would test timing, cursor behavior, and the relationship between choice and performance.",
     historicalUrl: "https://awp.diaart.org/fpcd/empathy.html"
