@@ -50,6 +50,13 @@
   const excerptLink = environment.excerptLink
     ? `<a class="text-link" href="${environment.excerptLink}">${environment.excerptLinkLabel}</a>`
     : `<span class="status">Candidate to be selected</span>`;
+  const recordingMedia = environment.vimeoId
+    ? `<div class="environment-video"><iframe src="https://player.vimeo.com/video/${environment.vimeoId}" title="${environment.title} emulator recording" loading="lazy" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>`
+    : `<div class="media-placeholder" aria-label="Emulator recording placeholder">
+          <span>Emulator recording</span>
+          <strong>Coming next</strong>
+          <small>30–60 seconds with sound</small>
+        </div>`;
 
   main.innerHTML = `
     <section class="environment-home-hero">
@@ -85,11 +92,7 @@
 
     <section class="page-section" aria-labelledby="recording-heading">
       <div class="section-inner environment-media-grid">
-        <div class="media-placeholder" aria-label="Emulator recording placeholder">
-          <span>Emulator recording</span>
-          <strong>Coming next</strong>
-          <small>30–60 seconds with sound</small>
-        </div>
+        ${recordingMedia}
         <div class="environment-media-copy">
           <p class="eyebrow">See the released work</p>
           <h2 id="recording-heading">${recordingTitle}</h2>

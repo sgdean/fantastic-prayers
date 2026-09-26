@@ -16,6 +16,7 @@ window.FP_ENVIRONMENTS = [
       ["80–150", "estimated hours", "full reconstruction"]
     ],
     recordingTitle: "A short walk down Ludlow Street.",
+    vimeoId: "1230511431",
     recordingCopy: "This space will hold a thirty-to-sixty-second recording from the emulator. The goal is to show movement along the street and at least one of its links, sounds, or changing states.",
     excerptTitle: "One street-level interaction.",
     excerptCopy: "The browser excerpt might focus on the pay phone, the graffiti text, or one of the street's portals. I will choose the moment after spending more time in the emulator and reviewing the design document.",
@@ -38,6 +39,7 @@ window.FP_ENVIRONMENTS = [
       ["28–55", "estimated hours", "full reconstruction"]
     ],
     recordingTitle: "An object, opened.",
+    vimeoId: "1230511521",
     recordingCopy: "The emulator recording will follow one object far enough to show how a small thing becomes an image, a voice, a song, or another location.",
     excerptTitle: "A lost thing in the browser.",
     excerptCopy: "The excerpt could center on one object and the change it triggers. That would give us a bounded interaction while preserving the sense that many more objects remain to be found.",
@@ -60,6 +62,7 @@ window.FP_ENVIRONMENTS = [
       ["33–65", "estimated hours", "full reconstruction"]
     ],
     recordingTitle: "Following the strand.",
+    vimeoId: "1230511489",
     recordingCopy: "The emulator recording will establish the basic movement of Hair: what appears first, what the visitor can affect, and how images and video change one another.",
     excerptTitle: "A transformation from Hair.",
     excerptCopy: "The excerpt candidate will come from the emulator review. It should reveal a rule or transformation, not just present one of the recovered videos by itself.",
@@ -82,6 +85,7 @@ window.FP_ENVIRONMENTS = [
       ["100–190", "estimated hours", "full reconstruction"]
     ],
     recordingTitle: "Excavating the Graveyard.",
+    vimeoId: "1230511449",
     recordingCopy: "The emulator recording should capture movement through the site and one reveal, without trying to summarize an environment built from dozens of video fragments.",
     excerptTitle: "A cinematic reveal.",
     excerptCopy: "A strong excerpt will show how an action, camera movement, and media fragment work together. The choice should make Graveyard's lens-driven character visible in a small space.",
@@ -128,6 +132,7 @@ window.FP_ENVIRONMENTS = [
       ["125–225", "estimated hours", "full reconstruction"]
     ],
     recordingTitle: "Taking the Jacket apart.",
+    vimeoId: "1230515077",
     recordingCopy: "The emulator recording will enter one subsection and return, showing how a part of the jacket becomes a distinct world without losing its place in the whole.",
     excerptTitle: "One stitch in a larger structure.",
     excerptCopy: "The excerpt should pair text with image and sound, then make clear that it represents one route through a much larger network of material and historical associations.",
@@ -150,6 +155,7 @@ window.FP_ENVIRONMENTS = [
       ["175–325", "estimated hours", "full reconstruction"]
     ],
     recordingTitle: "A surface that will not stay still.",
+    vimeoId: "1230511540",
     recordingCopy: "The emulator recording will pan across the photographed interior and reveal several layers, giving a sense of how much can be hidden inside one architectural view.",
     excerptTitle: "One surface, several layers.",
     excerptCopy: "The excerpt should let a visitor change a small area through more than one state. That would test both the visual layering and the rules that keep its short sounds from becoming noise.",
@@ -172,6 +178,7 @@ window.FP_ENVIRONMENTS = [
       ["23–50", "estimated hours", "full reconstruction"]
     ],
     recordingTitle: "Playing the wheel.",
+    vimeoId: "1230511548",
     recordingCopy: "The emulator recording will show the wheel in use, the response it produces, and the special placement of the shared video-eye navigation.",
     excerptTitle: "A turn of the wheel.",
     excerptCopy: "A bounded browser excerpt could reproduce one part of the wheel and a small set of responses. It would test timing, cursor behavior, and the relationship between choice and performance.",
