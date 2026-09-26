@@ -120,7 +120,7 @@
     <section class="source-strip" aria-labelledby="sources-heading">
       <div class="section-inner source-grid">
         <h2 class="eyebrow" id="sources-heading">Sources in use</h2>
-        <p>This first page draws on the <a href="${environment.historicalUrl}">historical Dia CD-ROM page</a>, the recovered media inventory, and project recollection. It will change as the design document and emulator recording are added.</p>
+        <p>This page draws on the <a href="${environment.historicalUrl}">historical Dia CD-ROM page</a>, the recovered files, my recollections, and the available references in the 1998 design document. The design records what we planned; the emulator shows what was released.</p>
       </div>
     </section>
 
