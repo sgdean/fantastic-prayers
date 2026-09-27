@@ -375,6 +375,7 @@ button, input { font: inherit; }
 .environment-card::before { content: counter(env,decimal-leading-zero); font-family: var(--sans); font-size: 1.25rem; font-weight: 600; }
 .environment-card h2 { margin: 0; font-family: var(--sans); font-size: clamp(1.8rem,2.8vw,2.65rem); font-weight: 500; letter-spacing: -.035em; line-height: 1; }
 .environment-card p { max-width: 35rem; margin: 0; }
+.status-stack { display: grid; gap: .5rem; justify-self: end; }
 .status {
   justify-self: end;
   padding: .35rem .55rem;
@@ -385,6 +386,19 @@ button, input { font: inherit; }
   line-height: 1.25;
   text-align: center;
   text-transform: uppercase;
+}
+.environment-card .status {
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  width: 7rem;
+  height: 2.75rem;
+  padding: .4rem .55rem;
+  border: 1px dashed rgba(23, 25, 27, .2);
+  background: transparent;
+  color: #62635f;
+  font-weight: 500;
+  letter-spacing: .1em;
 }
 .environment-card.featured {
   margin: 0 calc(50% - 50vw);
@@ -430,6 +444,8 @@ button, input { font: inherit; }
 .source-strip { border-top: 4px solid var(--green); background: var(--paper-bright); }
 .source-grid { display: grid; padding: 2.5rem 0; grid-template-columns: .35fr 1fr; gap: 2rem; }
 .source-grid p { max-width: 48rem; margin: 0; }
+.audio-tour { display: grid; gap: 1rem; }
+.audio-tour audio { display: block; width: 100%; max-width: 36rem; }
 .environment-pagination { display: grid; grid-template-columns: repeat(3,1fr); }
 .environment-pagination a { min-height: 11rem; padding: 1.5rem; border-top: 1px solid var(--line); border-right: 1px solid var(--line); text-decoration: none; }
 .environment-pagination a:hover, .environment-pagination a:focus-visible { box-shadow: inset 0 4px 0 var(--green); background: var(--soft); }
@@ -475,6 +491,8 @@ button, input { font: inherit; }
   .environment-card::before { font-size: 1.45rem; }
   .environment-card > div:nth-of-type(2), .environment-card .status { grid-column: 2; }
   .environment-card .status { justify-self: start; }
+  .environment-card .status-stack { grid-column: 2; justify-self: start; }
+  .environment-card .status-stack .status { grid-column: auto; }
   .footer-inner { flex-direction: column; }
   .environment-pagination a, .environment-pagination a:last-child, .environment-index-link { min-height: 8rem; text-align: left; }
 }

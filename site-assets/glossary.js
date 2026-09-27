@@ -4,8 +4,9 @@
     director: 'At the time <em>Fantastic Prayers</em> was made, Director was Macromedia\'s software for assembling images, sound, video, animation, and interaction. A Director file acts as a container for the media and scripts that make an interactive section work. Adobe later acquired Macromedia and discontinued Director.',
     'design-document': 'The original 42-page document Steven wrote while <em>Fantastic Prayers</em> was being made. It describes the intended structure, interactions, sound, images, and behavior of each section. What it says was planned may differ from what was built or released.',
     fingerprint: 'A short code calculated from the contents of a file, often called a checksum. If any part of the file changes, the code changes too. This lets us confirm that a preserved file remains identical.',
-    hotspots: 'Areas of the screen programmed to respond to the pointer. A rollover reacts when the pointer moves across it. A clickable hotspot reacts when the visitor clicks or taps.',
+    hotspots: 'Areas of the screen programmed to respond to the pointer. A rollover reacts when the pointer moves across it. A clickable hotspot reacts when the visitor clicks or taps. In the reconstruction, these responses are rebuilt using modern web browser technology.',
     reconstruction: 'A new implementation that aims to reproduce the released artwork\'s appearance, sound, timing, and behavior using modern web browser technology.',
+    assets: 'The materials and code that make up the work: images, sound files, videos, text, animation, and scripts that control interaction and logic.',
     rollover: 'An interaction triggered when the pointer moves across a particular area of the screen, without requiring a click.'
   };
   const terms = Array.from(document.querySelectorAll('.glossary-term'));

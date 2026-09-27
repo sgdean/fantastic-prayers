@@ -11,7 +11,7 @@ window.FP_ENVIRONMENTS = [
       "Above the street, a rooftop view moves from noon to dusk to night. Down at the pay phone, six digits become an I Ching reading. These are places to spend time, not just ways to get somewhere."
     ],
     facts: [
-      ["53", "recovered sounds", "14:02 total"],
+      ["53", "recovered sound files", "14:02 total"],
       ["6", "recovered videos", "2:25 total"],
       ["80–150", "estimated hours", "full reconstruction"]
     ],
@@ -34,7 +34,7 @@ window.FP_ENVIRONMENTS = [
       "I think of each object as a place to begin. Its size gives no clue to what it holds, or how long you might stay with it."
     ],
     facts: [
-      ["19", "recovered sounds", "3:07 total"],
+      ["19", "recovered sound files", "3:07 total"],
       ["12", "recovered videos", "4:10 total"],
       ["28–55", "estimated hours", "full reconstruction"]
     ],
@@ -58,7 +58,7 @@ window.FP_ENVIRONMENTS = [
     ],
     facts: [
       ["8", "recovered videos", "6:03 total"],
-      ["0", "section audio files", "shared sound remains possible"],
+      ["0", "section sound files", "shared sound remains possible"],
       ["33–65", "estimated hours", "full reconstruction"]
     ],
     recordingTitle: "One way through Hair.",
@@ -81,7 +81,7 @@ window.FP_ENVIRONMENTS = [
     ],
     facts: [
       ["48", "recovered videos", "15:24 total"],
-      ["26", "recovered sounds", "8:32 total"],
+      ["26", "recovered sound files", "8:32 total"],
       ["100–190", "estimated hours", "full reconstruction"]
     ],
     recordingTitle: "One way through Graveyard.",
@@ -103,12 +103,13 @@ window.FP_ENVIRONMENTS = [
       "Building Walls established a working process for preparing old media, placing hotspots, programming interactions, and comparing the result with remembered and observed behavior. It also gave us the first real measure of the labor involved."
     ],
     facts: [
-      ["9", "recovered sounds", "1:24 total"],
+      ["9", "recovered sound files", "1:24 total"],
       ["14", "recovered videos", "3:21 total"],
       ["50", "hours", "prototype benchmark"]
     ],
     recordingTitle: "The original Walls in motion.",
-    recordingCopy: "A short emulator recording will sit beside the browser prototype so visitors can compare the released environment with the reconstruction work now underway.",
+    vimeoId: "1230704308",
+    recordingCopy: "This is one route through Walls That Speak, following the choices I made during this visit. Your path would be different. Duration: 02:02. Turn your sound up.",
     excerptTitle: "The prototype is already live.",
     excerptCopy: "Walls is more than the smaller excerpts planned for the other environments. It is a working prototype of the room, with multiple surfaces, hotspots, sounds, and videos.",
     excerptLink: "../../world/",
@@ -120,14 +121,14 @@ window.FP_ENVIRONMENTS = [
     number: "06",
     title: "Jacket",
     deck: "A text-driven collection of materials and histories stitched into one object and many smaller worlds.",
-    brief: "Jacket takes one object apart through fabric, indigo, labels, hair, design, and tortoise. Its stories move across scale and time, from the molecular world to Marco Polo, Queen Victoria, the disco, a boy in India who loves films, and the invention of synthetic indigo. The disassembly confirms how large it is: sixteen Director containers and sixty recovered sounds support its many linked subsections.",
+    brief: "Jacket takes one object apart through fabric, indigo, labels, hair, design, and tortoise. Its stories move across scale and time, from the molecular world to Marco Polo, Queen Victoria, the disco, a boy in India who loves films, and the invention of synthetic indigo. The disassembly confirms how large it is: sixteen Director containers and sixty recovered sound files support its many linked subsections.",
     sectionTitle: "One object, many histories.",
     description: [
       "You begin with a charcoal drawing of a jacket. Moving over it opens windows onto six smaller worlds, each with a sound. The design document asks for each window to remain visible after a visit. The jacket holds a trace of where you've been.",
       "Each subsection has its own visual and sonic identity. Stephen remembered dozens of small scores supporting the text, sometimes placing sound in the foreground and sometimes letting it hold a scene together."
     ],
     facts: [
-      ["60", "recovered sounds", "6:08 total"],
+      ["60", "recovered sound files", "6:08 total"],
       ["16", "Director containers", "linked subsections"],
       ["125–225", "estimated hours", "full reconstruction"]
     ],
@@ -150,7 +151,7 @@ window.FP_ENVIRONMENTS = [
       "Tony described Natatorium as architectural and archaeological. That combination is the key to understanding it: the visitor moves through a space while excavating other images and sounds held inside its surfaces."
     ],
     facts: [
-      ["273", "recovered sounds", "4:52 total"],
+      ["273", "recovered sound files", "4:52 total"],
       ["10", "recovered videos", "4:14 total"],
       ["175–325", "estimated hours", "full reconstruction"]
     ],
@@ -174,7 +175,7 @@ window.FP_ENVIRONMENTS = [
     ],
     facts: [
       ["14", "recovered videos", "2:39 total"],
-      ["1", "recovered sound", "18 seconds"],
+      ["1", "recovered sound file", "18 seconds"],
       ["23–50", "estimated hours", "full reconstruction"]
     ],
     recordingTitle: "One turn through Empathy Wheel.",

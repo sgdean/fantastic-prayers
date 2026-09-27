@@ -48,7 +48,7 @@
   const excerptTitle = addDefinitions(environment.excerptTitle);
   const excerptCopy = addDefinitions(environment.excerptCopy);
   const excerptLink = environment.excerptLink
-    ? `<a class="text-link" href="${environment.excerptLink}">${environment.excerptLinkLabel}</a>`
+    ? `<a class="text-link" href="${environment.excerptLink}" target="_blank" rel="noopener noreferrer">${environment.excerptLinkLabel}</a>`
     : `<span class="status">Candidate to be selected</span>`;
   const recordingMedia = environment.vimeoId
     ? `<div class="environment-video"><iframe src="https://player.vimeo.com/video/${environment.vimeoId}" title="${environment.title} emulator recording" loading="lazy" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>`
